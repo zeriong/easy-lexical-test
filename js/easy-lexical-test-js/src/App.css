@@ -1,0 +1,13 @@
+.easy_lexical_test_container {
+    display: flex;
+    justify-content: center;
+    padding: 100px;
+}
+.easy_lexical_test_inner {
+    width: 100%;
+    max-width: 1056px;
+}
+.easy_lexical_test_title {
+    font-size: 40px;
+    font-weight: bold;
+}
