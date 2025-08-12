@@ -23,53 +23,44 @@ export default function ResizableImage({
   onResize,
   onResizeEnd,
 }) {
+  // handle point가 가지게 될 className
+  const HANDLER_POINT_CLASS_NAME = "easy_lexical_image_handle_point";
+
+  // image를 비교하기 위해 id 저장
+  const imgIdRef = useRef(null);
   const containerRef = useRef(null);
   const imgRef = useRef(null);
   const frameRef = useRef(null);
 
+  // Resize drag logic state
+  const dragState = useRef(null);
+
+  // Track modifier flag
+  const isShiftPressedRef = useRef(false);
+  // 기존의 이미지가 가지고 있던 ratio
   const [naturalRatio, setNaturalRatio] = useState(null);
   const [size, setSize] = useState({
     width: initialWidth,
     height: initialHeight ?? Math.round(initialWidth * 0.666),
   });
+  // resizable 여부 state
+  const [isResizable, setIsResizable] = useState(false);
 
-  // Track modifier keys
-  const shiftPressedRef = useRef(false);
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key === "Shift") shiftPressedRef.current = true;
-    };
-    const onKeyUp = (e) => {
-      if (e.key === "Shift") shiftPressedRef.current = false;
-    };
-    window.addEventListener("keydown", onKeyDown, { passive: true });
-    window.addEventListener("keyup", onKeyUp, { passive: true });
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
+  // ? 이미지 클릭 시 고유 className과 일치한 경우
+  const resizableSwitch = (event) => {
+    if (event.target.className === HANDLER_POINT_CLASS_NAME) {
+      return;
+    }
 
-  // Get natural image ratio when loaded
-  useLayoutEffect(() => {
-    const img = new Image();
-    img.src = src;
-    img
-      .decode?.()
-      .catch(() => {
-        /* ignore */
-      })
-      .finally(() => {
-        const ratio =
-          img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null;
-        setNaturalRatio(ratio);
-        if (!initialHeight && ratio) {
-          setSize((s) => ({ width: s.width, height: Math.round(s.width / ratio) }));
-        }
-      });
-  }, [src]);
+    // 아이디가 동일한 경우 resizable 상태가 됨
+    if (imgIdRef.current === event.target.id) {
+      setIsResizable(true);
+    } else {
+      setIsResizable(false);
+    }
+  };
 
-  // Clamp helper with parent bounds
+  // ? 사이즈 보정 함수
   const clampSize = useCallback(
     (w, h) => {
       const parent = containerRef.current?.getBoundingClientRect();
@@ -90,9 +81,7 @@ export default function ResizableImage({
     [keepWithinParent, maxWidth, maxHeight, minWidth, minHeight],
   );
 
-  // Resize logic
-  const dragState = useRef(null);
-
+  // ? 최종 resize 적용 함수
   const applyResize = useCallback(
     (handle, dx, dy, lockAspect) => {
       const current = dragState.current;
@@ -132,6 +121,7 @@ export default function ResizableImage({
     [clampSize, naturalRatio, onResize],
   );
 
+  // ? resize point mouseDown 함수
   const onPointerDown = useCallback(
     (e) => {
       const handle = e.currentTarget.dataset.handle || "se";
@@ -150,19 +140,21 @@ export default function ResizableImage({
         aspect: naturalRatio,
       };
 
+      // ! 이동 함수
       const move = (ev) => {
         const current = dragState.current;
         if (!current) return;
         const dx = ev.clientX - current.startX;
         const dy = ev.clientY - current.startY;
 
-        // rAF throttle
+        // rAF throttle ( animation을 활용하여 Layout 과정을 건너뛰고 composite에서 해결 )
         if (current.raf) cancelAnimationFrame(current.raf);
         current.raf = requestAnimationFrame(() => {
-          applyResize(current.handle, dx, dy, shiftPressedRef.current || lockAspectByDefault);
+          applyResize(current.handle, dx, dy, isShiftPressedRef.current || lockAspectByDefault);
         });
       };
 
+      // ! 마우스 업
       const up = () => {
         const current = dragState.current;
         if (!current) return;
@@ -182,35 +174,93 @@ export default function ResizableImage({
     [applyResize, lockAspectByDefault, naturalRatio, onResizeEnd, size],
   );
 
-  return (
-    <div ref={containerRef} style={styles.container}>
-      <div ref={frameRef} style={{ ...styles.frame, width: size.width, height: size.height }}>
-        <img ref={imgRef} src={src} alt={alt} draggable={false} style={styles.img} />
+  // * init effect
+  useEffect(() => {
+    // ! 기본 keyDown/up 이벤트 등록
+    const onKeyDown = (e) => {
+      if (e.key === "Shift") isShiftPressedRef.current = true;
+    };
+    const onKeyUp = (e) => {
+      if (e.key === "Shift") isShiftPressedRef.current = false;
+    };
+    window.addEventListener("keydown", onKeyDown, { passive: true });
+    window.addEventListener("keyup", onKeyUp, { passive: true });
 
-        {/* 8 handles */}
-        {["n", "s", "e", "w", "ne", "nw", "se", "sw"].map((h) => (
-          <div
-            key={h}
-            data-handle={h}
-            onPointerDown={onPointerDown}
-            style={{ ...styles.handle, ...handlePos[h] }}
-            title={`${h.toUpperCase()} resize`}
-          />
-        ))}
-      </div>
+    window.addEventListener("pointerdown", resizableSwitch, { passive: true });
+
+    // ! document 기반으로 같은 className이 있는지 재귀적으로 확인하며 없는 고유 클래스 네임을 생성하여 적용
+    function createUniqueClassName() {
+      const newId = `easy-lexical-image-wrapper_${Date.now() + Math.random()}`;
+      const isExists = document.getElementById(newId);
+      if (!isExists) {
+        // id 저장( 이미지를 개별로 핸들링 가능하도록 )
+        imgIdRef.current = newId;
+        imgRef.current.id = newId;
+        return;
+      }
+      createUniqueClassName();
+    }
+    // id가 혹시나 중복된다면 재귀적으로 없을 때까지 만듦
+    createUniqueClassName();
+
+    // cleanup
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("pointerdown", resizableSwitch);
+    };
+  }, []);
+
+  // * Get natural image ratio when loaded
+  useLayoutEffect(() => {
+    const img = new Image();
+    img.src = src;
+    img
+      .decode?.()
+      .catch(() => {
+        /* ignore */
+      })
+      .finally(() => {
+        const ratio =
+          img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null;
+        setNaturalRatio(ratio);
+        if (!initialHeight && ratio) {
+          setSize((s) => ({ width: s.width, height: Math.round(s.width / ratio) }));
+        }
+      });
+  }, [src]);
+
+  return (
+    <div
+      ref={frameRef}
+      style={{
+        ...styles.frame,
+        ...(isResizable ? styles.resizableFrame : {}),
+        width: size.width,
+        height: size.height,
+      }}
+    >
+      <img ref={imgRef} src={src} alt={alt} draggable={false} style={styles.img} />
+
+      {/* 8 handles */}
+      {["n", "s", "e", "w", "ne", "nw", "se", "sw"].map((h) => (
+        <div
+          key={h}
+          data-handle={h}
+          onPointerDown={onPointerDown}
+          style={isResizable ? { ...styles.handleWrapper, ...handlePos[h] } : {}}
+          title={`${h.toUpperCase()} resize`}
+          className={HANDLER_POINT_CLASS_NAME}
+        >
+          <div style={isResizable ? { ...styles.handle } : {}} />
+        </div>
+      ))}
     </div>
   );
 }
 
 /** Inline Styles (no Tailwind dependency) */
 const styles = {
-  page: {
-    minHeight: "100vh",
-    padding: 24,
-    background: "#0f172a",
-    color: "#e2e8f0",
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
-  },
   h1: { fontSize: 22, margin: 0, marginBottom: 12, fontWeight: 700 },
   note: { opacity: 0.9, marginBottom: 16, lineHeight: 1.6 },
   stage: {
@@ -231,43 +281,41 @@ const styles = {
     placeItems: "center",
   },
   frame: {
+    maxWidth: "100%",
     position: "relative",
     boxSizing: "border-box",
-    border: "1px dashed #64748b",
-    borderRadius: 8,
-    overflow: "hidden",
+    cursor: "pointer",
     touchAction: "none", // allow pinch/drag without browser gestures breaking it
-    background: "#0b1220",
+  },
+  resizableFrame: {
+    border: "1px dashed #64748b",
   },
   img: {
     width: "100%",
     height: "100%",
-    objectFit: "cover",
     display: "block",
     userSelect: "none",
-    pointerEvents: "none",
+  },
+  handleWrapper: {
+    padding: "10px",
+    position: "absolute",
+    cursor: "nwse-resize",
+    touchAction: "none",
   },
   handle: {
-    position: "absolute",
-    width: 12,
-    height: 12,
+    width: 8,
+    height: 8,
     background: "#22d3ee",
-    border: "2px solid #0b1220",
-    borderRadius: 999,
-    boxShadow: "0 0 0 2px rgba(34,211,238,0.3)",
-    cursor: "nwse-resize",
-    // increase hit area without affecting visuals
-    touchAction: "none",
   },
 };
 
 const handlePos = {
-  n: { top: -6, left: "50%", transform: "translateX(-50%)", cursor: "ns-resize" },
-  s: { bottom: -6, left: "50%", transform: "translateX(-50%)", cursor: "ns-resize" },
-  e: { right: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
-  w: { left: -6, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
-  ne: { right: -6, top: -6, cursor: "nesw-resize" },
-  nw: { left: -6, top: -6, cursor: "nwse-resize" },
-  se: { right: -6, bottom: -6, cursor: "nwse-resize" },
-  sw: { left: -6, bottom: -6, cursor: "nesw-resize" },
+  n: { top: -15, left: "50%", transform: "translateX(-50%)", cursor: "ns-resize" },
+  s: { bottom: -15, left: "50%", transform: "translateX(-50%)", cursor: "ns-resize" },
+  e: { right: -15, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
+  w: { left: -15, top: "50%", transform: "translateY(-50%)", cursor: "ew-resize" },
+  ne: { right: -15, top: -15, cursor: "nesw-resize" },
+  nw: { left: -15, top: -15, cursor: "nwse-resize" },
+  se: { right: -15, bottom: -15, cursor: "nwse-resize" },
+  sw: { left: -15, bottom: -15, cursor: "nesw-resize" },
 };
