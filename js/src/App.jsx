@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import EasyLexicalEditor from "./lib/EasyLexicalEditor.jsx";
+import EasyLexicalEditor from "./lib/EasyLexicalEditor/EasyLexicalEditor.jsx";
+import ResizableImage from "./lib/EasyLexicalEditor/components/ResizableImage.jsx";
 
 function App() {
   const [contentList, setContentList] = useState([]);
@@ -12,7 +13,18 @@ function App() {
       <div className={"easy_lexical_test_inner"}>
         <p className={"easy_lexical_test_title"}>Hello!</p>
 
-        <EasyLexicalEditor />
+        <EasyLexicalEditor showTerminal />
+
+        <ResizableImage
+          src="https://images.unsplash.com/photo-1557683316-973673baf926?w=1200"
+          alt="gradient"
+          initialWidth={320}
+          maxWidth={800}
+          minWidth={120}
+          lockAspectByDefault={false}
+          keepWithinParent
+          onResizeEnd={(size) => console.log("resized:", size)}
+        />
 
         {contentList?.map((content) => {
           return <div dangerouslySetInnerHTML={{ __html: content }} />;
