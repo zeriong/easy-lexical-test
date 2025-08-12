@@ -15,17 +15,19 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 
-import { $isTextNode, isHTMLElement, ParagraphNode, TextNode } from "lexical";
+import { $getRoot, $isTextNode, isHTMLElement, ParagraphNode, TextNode } from "lexical";
 import { ImageNode } from "./nodes/ImageNode.js";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { $generateHtmlFromNodes } from "@lexical/html";
 
 import TreeViewPlugin from "./plugins/TreeViewPlugin";
 
 import { BasicTheme } from "./common/common.js";
 import ToolbarPlugin from "./plugins/ToolbarPlugin.jsx";
 import { parseAllowedColor, parseAllowedFontSize } from "./utils/common.js";
-
-const placeholder = "Enter some rich text...";
+import { ResizableImageNode } from "./nodes/ResizableImageNode.jsx";
+import ResizableImagePlugin from "./plugins/ResizableImagePlugin.jsx";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 const removeStylesExportDOM = (editor, target) => {
   const output = target.exportDOM(editor);
@@ -117,29 +119,48 @@ const constructImportMap = () => {
   return importMap;
 };
 
-const editorConfig = {
-  html: {
-    export: exportMap,
-    import: constructImportMap(),
-  },
-  namespace: "Easy-Lexical-Editor",
-  nodes: [ParagraphNode, TextNode, ImageNode, HeadingNode, QuoteNode],
-  onError(error) {
-    throw error;
-  },
-  theme: BasicTheme,
-};
-
 /**
  * @param {Object} props
  * @param {boolean} props.showTerminal
+ * @param {string} props.placeholder
  * */
-export default function EasyLexicalEditor({ showTerminal }) {
+export default function EasyLexicalEditor({ showTerminal, placeholder = "내용을 입력해주세요." }) {
+  const editorConfig = {
+    html: {
+      export: exportMap,
+      import: constructImportMap(),
+    },
+    namespace: "Easy-Lexical-Editor",
+    nodes: [ParagraphNode, TextNode, ImageNode, HeadingNode, QuoteNode, ResizableImageNode],
+    onError(error) {
+      throw error;
+    },
+    theme: BasicTheme,
+  };
+
+  function handleChange(editorState, editor) {
+    editorState.read(() => {
+      const text = $getRoot().getTextContent(); // 순수 텍스트
+      const html = $generateHtmlFromNodes(editor); // HTML
+      const json = editorState.toJSON(); // JSON (직렬화)
+
+      console.log("온체인지 키키", { text, html, json });
+    });
+  }
+
   return (
     <LexicalComposer initialConfig={editorConfig}>
       <div className="editor-container">
+        {/* Toolbars */}
         <ToolbarPlugin />
+
+        {/* editor inner */}
         <div className="editor-inner">
+          {/* plugins */}
+          <OnChangePlugin onChange={handleChange} />
+          <HistoryPlugin />
+          <AutoFocusPlugin />
+          <ResizableImagePlugin />
           <RichTextPlugin
             contentEditable={
               <ContentEditable
@@ -151,8 +172,7 @@ export default function EasyLexicalEditor({ showTerminal }) {
             ErrorBoundary={LexicalErrorBoundary}
           />
 
-          <HistoryPlugin />
-          <AutoFocusPlugin />
+          {/* Test terminal Plugin */}
           {showTerminal && <TreeViewPlugin />}
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import EasyLexicalEditor from "./lib/EasyLexicalEditor/EasyLexicalEditor.jsx";
-import ResizableImage from "./lib/EasyLexicalEditor/components/ResizableImage.jsx";
+import ResizableImage from "./lib/EasyLexicalEditor/components/resizableImage/ResizableImage.jsx";
 
 function App() {
   const [contentList, setContentList] = useState([]);
@@ -16,11 +16,11 @@ function App() {
         <EasyLexicalEditor showTerminal />
 
         <ResizableImage
-          src="https://images.unsplash.com/photo-1557683316-973673baf926?w=1200"
+          src={"/노동짤.png"}
           alt="gradient"
-          initialWidth={320}
-          maxWidth={800}
-          minWidth={120}
+          // initialWidth={320}
+          // maxWidth={800}
+          // minWidth={120}
           lockAspectByDefault={false}
           keepWithinParent
           onResizeEnd={(size) => console.log("resized:", size)}

@@ -24,7 +24,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { $patchStyleText, $setBlocksType } from "@lexical/selection";
 import { $createHeadingNode, $createQuoteNode, HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { $createImageNode } from "../nodes/ImageNode";
+import { $createImageNode } from "../nodes/ImageNode.js";
+import { INSERT_RESIZABLE_IMAGE_COMMAND } from "../contants/common.js";
 
 function Divider() {
   return <div className="divider" />;
@@ -74,10 +75,7 @@ export default function ToolbarPlugin() {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
 
-      console.log("getSelection임 ㅋㅋ", selection);
-
       if (type === "paragraph") {
-        console.log("Type임 ㅋㅋ ㅋㅋ", type);
         // ✅ 0.33.1 대응: ParagraphNode 직접 생성
         $setBlocksType(selection, () => new ParagraphNode());
       } else if (type === "quote") {
@@ -110,25 +108,43 @@ export default function ToolbarPlugin() {
   // 이미지 업로드
   const onPickImage = () => fileInputRef.current && fileInputRef.current.click();
 
+  // ! ============ props로 [ preUploader => src ] 받아서 있다면 createObjectURL과 분기할 수 있도록 구성 // todo
   const onFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
+    // * ======== 여기부터 분기 태워서 처리
     const url = URL.createObjectURL(file);
 
-    editor.update(() => {
-      const selection = $getSelection();
-      const imageNode = $createImageNode(url, file.name);
+    // ? 기본 로직
+    // editor.update(() => {
+    //   const selection = $getSelection();
+    //   const imageNode = $createImageNode(url, file.name);
+    //
+    //   if ($isRangeSelection(selection)) {
+    //     const top = selection.anchor.getNode().getTopLevelElementOrThrow();
+    //     top.insertAfter(imageNode);
+    //     imageNode.selectNext();
+    //   } else {
+    //     // selection 없으면 root 끝에 추가
+    //     const root = $getRoot();
+    //     root.append(imageNode);
+    //   }
+    // });
 
-      if ($isRangeSelection(selection)) {
-        const top = selection.anchor.getNode().getTopLevelElementOrThrow();
-        top.insertAfter(imageNode);
-        imageNode.selectNext();
-      } else {
-        // selection 없으면 root 끝에 추가
-        const root = $getRoot();
-        root.append(imageNode);
-      }
+    // ResizableImageNode 삽입 (DecoratorNode)
+    editor.dispatchCommand(INSERT_RESIZABLE_IMAGE_COMMAND, {
+      src: url,
+      alt: file.name,
+      // 아래 옵션은 네 ResizableImage props에 그대로 전달됨
+      // width: 320, // initialWidth
+      height: undefined, // initialHeight (비율 계산되게 비워둠)
+      // minWidth: 50,
+      // minHeight: 50,
+      // maxWidth: 800, // 부모영역 제한과 함께 사용 가능
+      maxHeight: Infinity,
+      lockAspectByDefault: false,
+      keepWithinParent: true,
     });
 
     // 실제 운영에선 서버 업로드 후 서버 URL로 교체 권장
