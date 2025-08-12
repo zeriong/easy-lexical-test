@@ -6,6 +6,16 @@ import ResizableImage from "./lib/EasyLexicalEditor/components/resizableImage/Re
 function App() {
   const [contentList, setContentList] = useState([]);
 
+  const [getEditorProps, setGetEditorProps] = useState(null);
+
+  // ? test submit
+  function onSubmit() {
+    console.log("서브밋임 ㅋㅋ", getEditorProps);
+    setContentList((prev) => {
+      return [...prev, getEditorProps.html];
+    });
+  }
+
   useEffect(() => {}, []);
 
   return (
@@ -13,18 +23,22 @@ function App() {
       <div className={"easy_lexical_test_inner"}>
         <p className={"easy_lexical_test_title"}>Hello!</p>
 
-        <EasyLexicalEditor showTerminal />
+        <EasyLexicalEditor showTerminal onChange={setGetEditorProps} />
 
-        <ResizableImage
-          src={"/노동짤.png"}
-          alt="gradient"
-          // initialWidth={320}
-          // maxWidth={800}
-          // minWidth={120}
-          lockAspectByDefault={false}
-          keepWithinParent
-          onResizeEnd={(size) => console.log("resized:", size)}
-        />
+        <button type={"button"} onClick={onSubmit}>
+          작성
+        </button>
+
+        {/*<ResizableImage*/}
+        {/*  src={"/노동짤.png"}*/}
+        {/*  alt="gradient"*/}
+        {/*  // initialWidth={320}*/}
+        {/*  // maxWidth={800}*/}
+        {/*  // minWidth={120}*/}
+        {/*  lockAspectByDefault={false}*/}
+        {/*  keepWithinParent*/}
+        {/*  onResizeEnd={(size) => console.log("resized:", size)}*/}
+        {/*/>*/}
 
         {contentList?.map((content) => {
           return <div dangerouslySetInnerHTML={{ __html: content }} />;

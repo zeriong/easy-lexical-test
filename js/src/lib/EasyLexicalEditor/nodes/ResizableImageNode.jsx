@@ -81,6 +81,51 @@ export class ResizableImageNode extends DecoratorNode {
       />
     );
   }
+
+  // * <img> 를 포함하여 모두 반환 가능하도록 구성
+  exportDOM() {
+    const img = document.createElement("img");
+    img.setAttribute("data-lexical-type", "resizable-image");
+    img.src = this.__src;
+    if (this.__alt) img.alt = this.__alt;
+
+    // 사이즈를 attribute나 style로 보존
+    if (Number.isFinite(this.__width)) img.setAttribute("width", String(Math.round(this.__width)));
+    if (Number.isFinite(this.__height))
+      img.setAttribute("height", String(Math.round(this.__height)));
+
+    // 역변환(importDOM) 용 힌트
+    if (Number.isFinite(this.__width))
+      img.setAttribute("data-width", String(Math.round(this.__width)));
+    if (Number.isFinite(this.__height))
+      img.setAttribute("data-height", String(Math.round(this.__height)));
+
+    return { element: img };
+  }
+
+  // * HTML Import method
+  static importDOM() {
+    return {
+      img: (node) => {
+        const mark = node.getAttribute && node.getAttribute("data-lexical-type");
+        if (mark === "resizable-image") {
+          return {
+            priority: 2,
+            conversion: () => {
+              const src = node.getAttribute("src") || "";
+              const alt = node.getAttribute("alt") || "";
+              const wAttr = node.getAttribute("data-width") || node.getAttribute("width");
+              const hAttr = node.getAttribute("data-height") || node.getAttribute("height");
+              const width = wAttr ? parseInt(wAttr, 10) : undefined;
+              const height = hAttr ? parseInt(hAttr, 10) : undefined;
+              return { node: new ResizableImageNode({ src, alt, width, height }) };
+            },
+          };
+        }
+        return null;
+      },
+    };
+  }
 }
 
 export function $createResizableImageNode(payload) {

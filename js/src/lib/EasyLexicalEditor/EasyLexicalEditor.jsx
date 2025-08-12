@@ -123,8 +123,13 @@ const constructImportMap = () => {
  * @param {Object} props
  * @param {boolean} props.showTerminal
  * @param {string} props.placeholder
+ * @param {any} props.onChange
  * */
-export default function EasyLexicalEditor({ showTerminal, placeholder = "내용을 입력해주세요." }) {
+export default function EasyLexicalEditor({
+  showTerminal,
+  placeholder = "내용을 입력해주세요.",
+  onChange,
+}) {
   const editorConfig = {
     html: {
       export: exportMap,
@@ -143,8 +148,8 @@ export default function EasyLexicalEditor({ showTerminal, placeholder = "내용�
       const text = $getRoot().getTextContent(); // 순수 텍스트
       const html = $generateHtmlFromNodes(editor); // HTML
       const json = editorState.toJSON(); // JSON (직렬화)
-
-      console.log("온체인지 키키", { text, html, json });
+      console.log("온체인지", { text, html, json });
+      onChange({ editorState, editor, text, html, json });
     });
   }
 

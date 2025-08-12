@@ -26,6 +26,11 @@ export default function ResizableImage({
   // handle point가 가지게 될 className
   const HANDLER_POINT_CLASS_NAME = "easy_lexical_image_handle_point";
 
+  const SIZE = {
+    width: initialWidth,
+    height: initialHeight ?? Math.round(initialWidth * 0.666),
+  };
+
   // image를 비교하기 위해 id 저장
   const imgIdRef = useRef(null);
   const containerRef = useRef(null);
@@ -39,12 +44,13 @@ export default function ResizableImage({
   const isShiftPressedRef = useRef(false);
   // 기존의 이미지가 가지고 있던 ratio
   const [naturalRatio, setNaturalRatio] = useState(null);
-  const [size, setSize] = useState({
-    width: initialWidth,
-    height: initialHeight ?? Math.round(initialWidth * 0.666),
-  });
   // resizable 여부 state
   const [isResizable, setIsResizable] = useState(false);
+
+  // render trigger를 위한 state
+  const [size, setSize] = useState(SIZE);
+  // 실시간 데이터 반영을 위한 ref
+  const sizeRef = useRef(SIZE);
 
   // ? 이미지 클릭 시 고유 className과 일치한 경우
   const resizableSwitch = (event) => {
@@ -116,6 +122,8 @@ export default function ResizableImage({
 
       const clamped = clampSize(w, h);
       setSize(clamped);
+      sizeRef.current = clamped;
+
       onResize?.(clamped);
     },
     [clampSize, naturalRatio, onResize],
@@ -161,7 +169,7 @@ export default function ResizableImage({
         if (current.raf) cancelAnimationFrame(current.raf);
         dragState.current = null;
         document.body.style.userSelect = "";
-        onResizeEnd?.(size);
+        onResizeEnd?.(sizeRef.current);
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
         window.removeEventListener("pointercancel", up);
@@ -176,6 +184,9 @@ export default function ResizableImage({
 
   // * init effect
   useEffect(() => {
+    // 초기 사이즈 설정
+    onResizeEnd?.({ width: initialWidth, height: initialHeight });
+
     // ! 기본 keyDown/up 이벤트 등록
     const onKeyDown = (e) => {
       if (e.key === "Shift") isShiftPressedRef.current = true;
@@ -225,7 +236,11 @@ export default function ResizableImage({
           img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null;
         setNaturalRatio(ratio);
         if (!initialHeight && ratio) {
-          setSize((s) => ({ width: s.width, height: Math.round(s.width / ratio) }));
+          setSize((s) => {
+            const newSize = { width: s.width, height: Math.round(s.width / ratio) };
+            sizeRef.current = JSON.parse(JSON.stringify(newSize));
+            return newSize;
+          });
         }
       });
   }, [src]);
