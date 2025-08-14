@@ -29,20 +29,39 @@ import { ResizableImageNode } from "./nodes/ResizableImageNode.jsx";
 import ResizableImagePlugin from "./plugins/ResizableImagePlugin.jsx";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
-const removeStylesExportDOM = (editor, target) => {
+// 제거할 스타일 중 안전한 스타일 리스트
+const ALLOWED_STYLE_KEYS = new Set([
+  "color",
+  "background-color",
+  "font-size",
+  "line-height",
+  "font-weight",
+]);
+
+// * 안전한 스타일만을 남김
+const whitelistStylesExportDOM = (editor, target) => {
   const output = target.exportDOM(editor);
   if (output && isHTMLElement(output.element)) {
-    // Remove all inline styles and classes if the element is an HTMLElement
-    // Children are checked as well since TextNode can be nested
-    // in i, b, and strong tags.
-    for (const el of [
-      output.element,
-      ...output.element.querySelectorAll('[style],[class],[dir="ltr"]'),
-    ]) {
+    const all = [output.element, ...output.element.querySelectorAll("[style],[class],[dir]")];
+    for (const el of all) {
+      // class/dir 정리
       el.removeAttribute("class");
-      el.removeAttribute("style");
-      if (el.getAttribute("dir") === "ltr") {
-        el.removeAttribute("dir");
+      if (el.getAttribute("dir") === "ltr") el.removeAttribute("dir");
+
+      // style 화이트리스트
+      if (el.hasAttribute("style")) {
+        const s = el.getAttribute("style") || "";
+        const next = s
+          .split(";")
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .filter((pair) => {
+            const k = pair.split(":")[0]?.trim().toLowerCase();
+            return ALLOWED_STYLE_KEYS.has(k);
+          })
+          .join("; ");
+        if (next) el.setAttribute("style", next);
+        else el.removeAttribute("style");
       }
     }
   }
@@ -50,8 +69,8 @@ const removeStylesExportDOM = (editor, target) => {
 };
 
 const exportMap = new Map([
-  [ParagraphNode, removeStylesExportDOM],
-  [TextNode, removeStylesExportDOM],
+  [ParagraphNode, whitelistStylesExportDOM],
+  [TextNode, whitelistStylesExportDOM],
 ]);
 
 const getExtraStyles = (element) => {
@@ -146,7 +165,7 @@ export default function EasyLexicalEditor({
   function handleChange(editorState, editor) {
     editorState.read(() => {
       const text = $getRoot().getTextContent(); // 순수 텍스트
-      const html = $generateHtmlFromNodes(editor); // HTML
+      const html = $generateHtmlFromNodes(editor, null); // HTML
       const json = editorState.toJSON(); // JSON (직렬화)
       console.log("온체인지", { text, html, json });
       onChange({ editorState, editor, text, html, json });
