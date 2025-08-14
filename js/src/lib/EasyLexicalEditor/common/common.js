@@ -41,3 +41,13 @@ export const BasicTheme = {
     underlineStrikethrough: "editor-text-underlineStrikethrough",
   },
 };
+
+// 블럭들이 가지게 될 스타일 지정
+// 기존 스타일 프리셋
+export const BLOCK_INLINE_STYLES = {
+  paragraph: "",
+  quote: "margin:12px 0;padding-left:12px;border-left:4px solid #e5e7eb;color:#475569;",
+  h1: "font-size:32px;line-height:1.3;font-weight:700;margin:16px 0;",
+  h2: "font-size:24px;line-height:1.35;font-weight:700;margin:14px 0;",
+  h3: "font-size:20px;line-height:1.4;font-weight:600;margin:12px 0;",
+};
