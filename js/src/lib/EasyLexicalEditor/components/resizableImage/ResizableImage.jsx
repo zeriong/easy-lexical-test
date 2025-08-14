@@ -300,6 +300,7 @@ const styles = {
     position: "relative",
     boxSizing: "border-box",
     cursor: "pointer",
+    border: "1px solid transparent",
     touchAction: "none", // allow pinch/drag without browser gestures breaking it
   },
   resizableFrame: {
