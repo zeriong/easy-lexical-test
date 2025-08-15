@@ -246,7 +246,7 @@ export default function ResizableImage({
   }, [src]);
 
   return (
-    <div
+    <p
       ref={frameRef}
       style={{
         ...styles.frame,
@@ -255,22 +255,22 @@ export default function ResizableImage({
         height: size.height,
       }}
     >
-      <img ref={imgRef} src={src} alt={alt} draggable={false} style={styles.img} />
+      <img ref={imgRef} src={src} alt={alt} style={styles.img} />
 
       {/* 8 handles */}
       {["n", "s", "e", "w", "ne", "nw", "se", "sw"].map((h) => (
-        <div
-          key={h}
+        <span
+          key={`${h}_${Date.now()}`}
           data-handle={h}
           onPointerDown={onPointerDown}
           style={isResizable ? { ...styles.handleWrapper, ...handlePos[h] } : {}}
           title={`${h.toUpperCase()} resize`}
           className={HANDLER_POINT_CLASS_NAME}
         >
-          <div style={isResizable ? { ...styles.handle } : {}} />
-        </div>
+          <span style={isResizable ? { ...styles.handle } : {}} />
+        </span>
       ))}
-    </div>
+    </p>
   );
 }
 
@@ -310,9 +310,9 @@ const styles = {
     width: "100%",
     height: "100%",
     display: "block",
-    userSelect: "none",
   },
   handleWrapper: {
+    display: "block",
     padding: "10px",
     position: "absolute",
     cursor: "nwse-resize",
@@ -321,6 +321,7 @@ const styles = {
   handle: {
     width: 8,
     height: 8,
+    display: "block",
     background: "#22d3ee",
   },
 };

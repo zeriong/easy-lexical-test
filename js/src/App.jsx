@@ -40,8 +40,10 @@ function App() {
         {/*  onResizeEnd={(size) => console.log("resized:", size)}*/}
         {/*/>*/}
 
-        {contentList?.map((content) => {
-          return <div dangerouslySetInnerHTML={{ __html: content }} />;
+        {contentList?.map((content, idx) => {
+          return (
+            <div key={"editor_content_" + idx} dangerouslySetInnerHTML={{ __html: content }} />
+          );
         })}
       </div>
     </div>

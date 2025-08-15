@@ -8,7 +8,13 @@ export class ResizableImageNode extends DecoratorNode {
   }
   static clone(node) {
     return new ResizableImageNode(
-      { src: node.__src, alt: node.__alt, width: node.__width, height: node.__height },
+      {
+        src: node.__src,
+        alt: node.__alt,
+        width: node.__width,
+        height: node.__height,
+        style: node.__style,
+      },
       node.__key,
     );
   }
@@ -19,6 +25,7 @@ export class ResizableImageNode extends DecoratorNode {
     this.__alt = payload.alt || "";
     this.__width = payload.width;
     this.__height = payload.height;
+    this.__style = payload.style;
   }
 
   isInline() {
@@ -56,10 +63,13 @@ export class ResizableImageNode extends DecoratorNode {
   }
 
   createDOM() {
-    const el = document.createElement("div");
-    el.style.display = "block";
+    const el = document.createElement("p");
+    el.style.display = "inline-block";
     el.style.width = "100%";
     el.style.position = "relative";
+    el.className = "resizable-image-class";
+    el.setAttribute("data-lexical-decorator", "true");
+    el.setAttribute("data-lexical-node-key", this.getKey());
     return el;
   }
   updateDOM() {
@@ -85,20 +95,29 @@ export class ResizableImageNode extends DecoratorNode {
   // * <img> 를 포함하여 모두 반환 가능하도록 구성
   exportDOM() {
     const img = document.createElement("img");
-    img.setAttribute("data-lexical-type", "resizable-image");
     img.src = this.__src;
     if (this.__alt) img.alt = this.__alt;
 
+    console.log("img element", img);
+
     // 사이즈를 attribute나 style로 보존
-    if (Number.isFinite(this.__width)) img.setAttribute("width", String(Math.round(this.__width)));
-    if (Number.isFinite(this.__height))
+    if (Number.isFinite(this.__width)) {
+      img.setAttribute("width", String(Math.round(this.__width)));
+    }
+    if (Number.isFinite(this.__height)) {
       img.setAttribute("height", String(Math.round(this.__height)));
+    }
 
     // 역변환(importDOM) 용 힌트
-    if (Number.isFinite(this.__width))
+    if (Number.isFinite(this.__width)) {
       img.setAttribute("data-width", String(Math.round(this.__width)));
-    if (Number.isFinite(this.__height))
+    }
+    if (Number.isFinite(this.__height)) {
       img.setAttribute("data-height", String(Math.round(this.__height)));
+    }
+
+    // 스타일 보존
+    // img.setAttribute("style", this.__style);
 
     return { element: img };
   }
@@ -129,5 +148,6 @@ export class ResizableImageNode extends DecoratorNode {
 }
 
 export function $createResizableImageNode(payload) {
+  console.log("페이로드", payload);
   return new ResizableImageNode(payload);
 }
