@@ -8,6 +8,7 @@
 
 import "./styles/easy-lexical-editor.css";
 
+import DOMPurify from "dompurify";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -22,46 +23,35 @@ import { $generateHtmlFromNodes } from "@lexical/html";
 
 import TreeViewPlugin from "./plugins/TreeViewPlugin";
 
-import { BasicTheme } from "./common/common.js";
+import { BasicTheme } from "./contants/common.js";
 import ToolbarPlugin from "./plugins/ToolbarPlugin.jsx";
-import { parseAllowedColor, parseAllowedFontSize } from "./utils/common.js";
 import { ResizableImageNode } from "./nodes/ResizableImageNode.jsx";
-import ResizableImagePlugin from "./plugins/ResizableImagePlugin.jsx";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-
-// 제거할 스타일 중 안전한 스타일 리스트
-const ALLOWED_STYLE_KEYS = new Set([
-  "color",
-  "background-color",
-  "font-size",
-  "line-height",
-  "font-weight",
-]);
 
 // * 안전한 스타일만을 남김
 const whitelistStylesExportDOM = (editor, target) => {
   const output = target.exportDOM(editor);
   if (output && isHTMLElement(output.element)) {
-    const all = [output.element, ...output.element.querySelectorAll("[style],[class],[dir]")];
-    for (const el of all) {
-      // class/dir 정리
-      el.removeAttribute("class");
-      if (el.getAttribute("dir") === "ltr") el.removeAttribute("dir");
+    // class/dir 제거
+    output.element.removeAttribute("class");
+    if (output.element.getAttribute("dir") === "ltr") {
+      output.element.removeAttribute("dir");
+    }
+    // 노드에 저장된 style 값 직접 세팅
+    const nodeStyle = target.getStyle?.();
+    if (nodeStyle) {
+      // style 속성만 sanitize
+      const sanitized = DOMPurify.sanitize(
+        `<${output.element.tagName} style="${nodeStyle}"></${output.element.tagName}>`,
+        { ALLOWED_ATTR: ["style"], ALLOWED_TAGS: [output.element.tagName.toLowerCase()] },
+      );
 
-      // style 화이트리스트
-      if (el.hasAttribute("style")) {
-        const s = el.getAttribute("style") || "";
-        const next = s
-          .split(";")
-          .map((x) => x.trim())
-          .filter(Boolean)
-          .filter((pair) => {
-            const k = pair.split(":")[0]?.trim().toLowerCase();
-            return ALLOWED_STYLE_KEYS.has(k);
-          })
-          .join("; ");
-        if (next) el.setAttribute("style", next);
-        else el.removeAttribute("style");
+      // 정규식으로 style 값만 추출
+      const match = sanitized.match(/style="([^"]*)"/i);
+      if (match) {
+        output.element.setAttribute("style", match[1]);
+      } else {
+        output.element.removeAttribute("style");
       }
     }
   }
@@ -71,32 +61,13 @@ const whitelistStylesExportDOM = (editor, target) => {
 const exportMap = new Map([
   [ParagraphNode, whitelistStylesExportDOM],
   [TextNode, whitelistStylesExportDOM],
+  [HeadingNode, whitelistStylesExportDOM],
+  [QuoteNode, whitelistStylesExportDOM],
 ]);
-
-const getExtraStyles = (element) => {
-  // Parse styles from pasted input, but only if they match exactly the
-  // sort of styles that would be produced by exportDOM
-  let extraStyles = "";
-  const fontSize = parseAllowedFontSize(element.style.fontSize);
-  const backgroundColor = parseAllowedColor(element.style.backgroundColor);
-  const color = parseAllowedColor(element.style.color);
-  if (fontSize !== "" && fontSize !== "15px") {
-    extraStyles += `font-size: ${fontSize};`;
-  }
-  if (backgroundColor !== "" && backgroundColor !== "rgb(255, 255, 255)") {
-    extraStyles += `background-color: ${backgroundColor};`;
-  }
-  if (color !== "" && color !== "rgb(0, 0, 0)") {
-    extraStyles += `color: ${color};`;
-  }
-  return extraStyles;
-};
 
 const constructImportMap = () => {
   const importMap = {};
 
-  // Wrap all TextNode importers with a function that also imports
-  // the custom styles implemented by the playground
   for (const [tag, fn] of Object.entries(TextNode.importDOM() || {})) {
     importMap[tag] = (importNode) => {
       const importer = fn(importNode);
@@ -115,20 +86,37 @@ const constructImportMap = () => {
           ) {
             return output;
           }
-          const extraStyles = getExtraStyles(element);
-          if (extraStyles) {
+
+          // 원본 style 가져오기
+          const originalStyle = element.getAttribute("style") || "";
+
+          // style만 포함한 안전한 태그 생성 후 DOMPurify로 정제
+          const sanitized = DOMPurify.sanitize(
+            `<${element.tagName} style="${originalStyle}"></${element.tagName}>`,
+            {
+              ALLOWED_TAGS: [element.tagName.toLowerCase()],
+              ALLOWED_ATTR: ["style"],
+            },
+          );
+
+          // 정규식으로 style 값만 추출
+          const match = sanitized.match(/style="([^"]*)"/i);
+          const safeStyle = match ? match[1] : "";
+
+          if (safeStyle) {
             const { forChild } = output;
             return {
               ...output,
               forChild: (child, parent) => {
                 const textNode = forChild(child, parent);
                 if ($isTextNode(textNode)) {
-                  textNode.setStyle(textNode.getStyle() + extraStyles);
+                  textNode.setStyle(safeStyle);
                 }
                 return textNode;
               },
             };
           }
+
           return output;
         },
       };
@@ -184,7 +172,6 @@ export default function EasyLexicalEditor({
           <OnChangePlugin onChange={handleChange} />
           <HistoryPlugin />
           <AutoFocusPlugin />
-          <ResizableImagePlugin />
           <RichTextPlugin
             contentEditable={
               <ContentEditable
