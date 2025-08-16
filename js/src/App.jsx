@@ -23,7 +23,11 @@ function App() {
       <div className={"easy_lexical_test_inner"}>
         <p className={"easy_lexical_test_title"}>Hello!</p>
 
-        <EasyLexicalEditor showTerminal onChange={setGetEditorProps} />
+        <EasyLexicalEditor
+          showTerminal
+          onChange={setGetEditorProps}
+          editorInnerInputHeight={"auto"}
+        />
         {/*<EasyLexicalEditor onChange={setGetEditorProps} />*/}
 
         <button type={"button"} onClick={onSubmit}>

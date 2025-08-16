@@ -135,11 +135,17 @@ const constructImportMap = () => {
  * @param {boolean} props.showTerminal
  * @param {string} props.placeholder
  * @param {any} props.onChange
+ * @param {React.CSSProperties} props.editorInnerInputStyle
+ * @param {`${number}px` | `${number}%` | `${number}vw` | "auto"} props.editorInnerInputWidth
+ * @param {`${number}px` | `${number}%` | `${number}vh` | "auto"} props.editorInnerInputHeight
  * */
 export default function EasyLexicalEditor({
   showTerminal,
   placeholder = "내용을 입력해주세요.",
   onChange,
+  editorInnerInputStyle,
+  editorInnerInputWidth,
+  editorInnerInputHeight = "500px",
 }) {
   const editorConfig = {
     html: {
@@ -176,10 +182,16 @@ export default function EasyLexicalEditor({
           <OnChangePlugin onChange={handleChange} />
           <HistoryPlugin />
           <AutoFocusPlugin />
+
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 className="editor-input"
+                style={{
+                  width: editorInnerInputWidth,
+                  height: editorInnerInputHeight,
+                  ...(editorInnerInputStyle || {}),
+                }}
                 aria-placeholder={placeholder}
                 placeholder={<div className="editor-placeholder">{placeholder}</div>}
               />
