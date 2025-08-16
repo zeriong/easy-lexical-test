@@ -76,11 +76,30 @@ export default function BlockTypeToolbar({ editor }) {
         onChange={setBlock}
         title="Block type"
       >
-        <option value="paragraph">Paragraph</option>
-        <option value="h1">H1</option>
-        <option value="h2">H2</option>
-        <option value="h3">H3</option>
-        <option value="quote">Quote</option>
+        <option value="paragraph" className={"editor-paragraph"}>
+          본문
+        </option>
+        <option value="h1" className={"editor-heading-h1"}>
+          H1
+        </option>
+        <option value="h2" className={"editor-heading-h2"}>
+          H2
+        </option>
+        <option value="h3" className={"editor-heading-h3"}>
+          H3
+        </option>
+        <option value="h4" className={"editor-heading-h4"}>
+          H4
+        </option>
+        <option value="h5" className={"editor-heading-h5"}>
+          H5
+        </option>
+        <option value="h6" className={"editor-heading-h6"}>
+          H6
+        </option>
+        <option value="quote" className={"editor-quote"}>
+          인용
+        </option>
       </select>
     </>
   );

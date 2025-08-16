@@ -14,6 +14,7 @@ export const BasicTheme = {
     h3: "editor-heading-h3",
     h4: "editor-heading-h4",
     h5: "editor-heading-h5",
+    h6: "editor-heading-h6",
   },
   image: "editor-image",
   link: "editor-link",
@@ -45,11 +46,25 @@ export const BasicTheme = {
 // 블럭들이 가지게 될 스타일 지정
 // 기존 스타일 프리셋
 export const BLOCK_INLINE_STYLES = {
-  paragraph: "",
-  quote: "margin:12px 0;padding-left:12px;border-left:4px solid #e5e7eb;color:#475569;",
-  h1: "font-size:32px;line-height:1.3;font-weight:700;margin:16px 0;",
-  h2: "font-size:24px;line-height:1.35;font-weight:700;margin:14px 0;",
-  h3: "font-size:20px;line-height:1.4;font-weight:600;margin:12px 0;",
+  paragraph: "font-size:16px;line-height:1.5;margin:0;",
+  quote:
+    "margin:12px 0;padding-left:12px;border-left:4px solid #e5e7eb;color:#475569;font-style:italic;line-height:1.6;",
+  h1: "font-size:32px;line-height:1.3;font-weight:700;margin:24px 0 16px;",
+  h2: "font-size:28px;line-height:1.35;font-weight:700;margin:20px 0 14px;",
+  h3: "font-size:24px;line-height:1.4;font-weight:600;margin:18px 0 12px;",
+  h4: "font-size:20px;line-height:1.45;font-weight:600;margin:16px 0 10px;",
+  h5: "font-size:18px;line-height:1.5;font-weight:500;margin:14px 0 8px;",
+  h6: "font-size:16px;line-height:1.5;font-weight:500;margin:12px 0 6px;",
+};
+
+export const TEXT_STYLE_OBJECT = {
+  bold: { style: "font-weight: bold", regexp: /font-weight:\s*bold;?/g },
+  italic: { style: "font-style: italic", regexp: /font-style:\s*italic;?/g },
+  underline: { style: "text-decoration: underline", regexp: /text-decoration:\s*underline;?/g },
+  strikethrough: {
+    style: "text-decoration: line-through",
+    regexp: /text-decoration:\s*line-through;?/g,
+  },
 };
 
 import { createCommand } from "lexical";
