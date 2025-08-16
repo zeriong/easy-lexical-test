@@ -148,7 +148,7 @@ export default function ImageUploadToolbar({ editor }) {
         aria-label="Insert Image"
         title="Insert image"
       >
-        <i className="format image" />
+        <i className="format image-upload" />
       </button>
       <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={onFileChange} />
     </>
