@@ -55,6 +55,10 @@ const whitelistStylesExportDOM = (editor, target) => {
       }
     }
   }
+  // p 태그의 기본 속성을 없애기 위함
+  if (output.element.tagName === "P") {
+    output.element.setAttribute("style", "margin: 0;");
+  }
   return output;
 };
 
