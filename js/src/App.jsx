@@ -24,6 +24,7 @@ function App() {
         <p className={"easy_lexical_test_title"}>Hello!</p>
 
         <EasyLexicalEditor showTerminal onChange={setGetEditorProps} />
+        {/*<EasyLexicalEditor onChange={setGetEditorProps} />*/}
 
         <button type={"button"} onClick={onSubmit}>
           작성
