@@ -10,7 +10,7 @@ function App() {
 
   // ? test submit
   function onSubmit() {
-    console.log("서브밋임 ㅋㅋ", getEditorProps);
+    console.log("서브밋", getEditorProps);
     setContentList((prev) => {
       return [...prev, getEditorProps.html];
     });
