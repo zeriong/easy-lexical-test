@@ -246,7 +246,7 @@ export default function ResizableImage({
   }, [src]);
 
   return (
-    <p
+    <span
       ref={frameRef}
       style={{
         ...styles.frame,
@@ -270,7 +270,7 @@ export default function ResizableImage({
           <span style={isResizable ? { ...styles.handle } : {}} />
         </span>
       ))}
-    </p>
+    </span>
   );
 }
 
@@ -296,6 +296,7 @@ const styles = {
     placeItems: "center",
   },
   frame: {
+    display: "block",
     maxWidth: "100%",
     position: "relative",
     boxSizing: "border-box",
@@ -312,7 +313,6 @@ const styles = {
     display: "block",
   },
   handleWrapper: {
-    display: "block",
     padding: "10px",
     position: "absolute",
     cursor: "nwse-resize",

@@ -29,7 +29,7 @@ export class ResizableImageNode extends DecoratorNode {
   }
 
   isInline() {
-    return false;
+    return true;
   }
 
   exportJSON() {
@@ -65,7 +65,6 @@ export class ResizableImageNode extends DecoratorNode {
   createDOM() {
     const el = document.createElement("p");
     el.style.display = "inline-block";
-    el.style.width = "100%";
     el.style.position = "relative";
     el.className = "resizable-image-class";
     el.setAttribute("data-lexical-decorator", "true");
@@ -97,8 +96,6 @@ export class ResizableImageNode extends DecoratorNode {
     const img = document.createElement("img");
     img.src = this.__src;
     if (this.__alt) img.alt = this.__alt;
-
-    console.log("img element", img);
 
     // 사이즈를 attribute나 style로 보존
     if (Number.isFinite(this.__width)) {

@@ -7,6 +7,8 @@ import {
   $setSelection,
   CLICK_COMMAND,
   COMMAND_PRIORITY_EDITOR,
+  COMMAND_PRIORITY_LOW,
+  PASTE_COMMAND,
 } from "lexical";
 import { $createImageNode } from "../../nodes/ImageNode.js";
 import { useEffect, useRef } from "react";
@@ -31,35 +33,35 @@ export default function ImageUploadToolbar({ editor }) {
     const url = URL.createObjectURL(file);
 
     // ? 기본 로직
-    editor.update(() => {
-      const selection = $getSelection();
-      const imageNode = $createImageNode(url, file.name);
-
-      if ($isRangeSelection(selection)) {
-        const top = selection.anchor.getNode().getTopLevelElementOrThrow();
-        top.insertAfter(imageNode);
-        imageNode.selectNext();
-      } else {
-        // selection 없으면 root 끝에 추가
-        const root = $getRoot();
-        root.append(imageNode);
-      }
-    });
+    // editor.update(() => {
+    //   const selection = $getSelection();
+    //   const imageNode = $createImageNode(url, file.name);
+    //
+    //   if ($isRangeSelection(selection)) {
+    //     const top = selection.anchor.getNode().getTopLevelElementOrThrow();
+    //     top.insertAfter(imageNode);
+    //     imageNode.selectNext();
+    //   } else {
+    //     // selection 없으면 root 끝에 추가
+    //     const root = $getRoot();
+    //     root.append(imageNode);
+    //   }
+    // });
 
     // ResizableImageNode 삽입 (DecoratorNode)
-    // editor.dispatchCommand(INSERT_RESIZABLE_IMAGE_COMMAND, {
-    //   src: url,
-    //   alt: file.name,
-    //   // 아래 옵션은 네 ResizableImage props에 그대로 전달됨
-    //   // width: 320, // initialWidth
-    //   height: undefined, // initialHeight (비율 계산되게 비워둠)
-    //   // minWidth: 50,
-    //   // minHeight: 50,
-    //   // maxWidth: 800, // 부모영역 제한과 함께 사용 가능
-    //   maxHeight: Infinity,
-    //   lockAspectByDefault: false,
-    //   keepWithinParent: true,
-    // });
+    editor.dispatchCommand(INSERT_RESIZABLE_IMAGE_COMMAND, {
+      src: url,
+      alt: file.name,
+      // 아래 옵션은 ResizableImage props에 그대로 전달됨
+      // width: 320, // initialWidth
+      height: undefined, // initialHeight (비율 계산되게 비워둠)
+      // minWidth: 50,
+      // minHeight: 50,
+      // maxWidth: 800, // 부모영역 제한과 함께 사용 가능
+      maxHeight: Infinity,
+      lockAspectByDefault: false,
+      keepWithinParent: true,
+    });
 
     // 실제 운영에선 서버 업로드 후 서버 URL로 교체 권장
     // URL.revokeObjectURL(url); // 표시 직후 revoke하면 이미지가 안 보일 수 있으니 적절한 타이밍에
@@ -103,7 +105,7 @@ export default function ImageUploadToolbar({ editor }) {
         COMMAND_PRIORITY_EDITOR,
       );
 
-      // ? click
+      // ? click시 selection 등록 커맨드
       editor.registerCommand(
         CLICK_COMMAND,
         (event) => {
@@ -111,7 +113,6 @@ export default function ImageUploadToolbar({ editor }) {
           if (target && target.closest && target.closest(".resizable-image-class")) {
             const imageElem = target.closest(".resizable-image-class");
             const nodeKey = imageElem?.getAttribute("data-lexical-node-key");
-
             if (nodeKey) {
               editor.update(() => {
                 const currentSelection = $getSelection();
