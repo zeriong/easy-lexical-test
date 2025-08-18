@@ -27,6 +27,8 @@ import { BasicTheme } from "./contants/common.js";
 import ToolbarPlugin from "./plugins/ToolbarPlugin.jsx";
 import { ResizableImageNode } from "./nodes/ResizableImageNode.jsx";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import ImageDnDPlugin from "./plugins/ImageDnDPlugin.jsx";
+import PasteImagePlugin from "./plugins/PasteImagePlugin.jsx";
 
 // * 안전한 스타일만을 남김
 const whitelistStylesExportDOM = (editor, target) => {
@@ -165,24 +167,28 @@ export default function EasyLexicalEditor({
       const text = $getRoot().getTextContent(); // 순수 텍스트
       const html = $generateHtmlFromNodes(editor, null); // HTML
       const json = editorState.toJSON(); // JSON (직렬화)
-      console.log("온체인지", { text, html, json });
+      // console.log("온체인지", { text, html, json });
       onChange({ editorState, editor, text, html, json });
     });
   }
 
   return (
     <LexicalComposer initialConfig={editorConfig}>
+      {/* plugins */}
+      <>
+        <OnChangePlugin onChange={handleChange} />
+        <HistoryPlugin />
+        <AutoFocusPlugin />
+        <ImageDnDPlugin />
+        <PasteImagePlugin />
+      </>
+
       <div className="editor-container">
         {/* Toolbars */}
         <ToolbarPlugin />
 
         {/* editor inner */}
         <div className="editor-inner">
-          {/* plugins */}
-          <OnChangePlugin onChange={handleChange} />
-          <HistoryPlugin />
-          <AutoFocusPlugin />
-
           <RichTextPlugin
             contentEditable={
               <ContentEditable
