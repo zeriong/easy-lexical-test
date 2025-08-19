@@ -9,6 +9,7 @@ export class ResizableImageNode extends DecoratorNode {
   static clone(node) {
     return new ResizableImageNode(
       {
+        id: node.__id,
         src: node.__src,
         alt: node.__alt,
         width: node.__width,
@@ -21,6 +22,7 @@ export class ResizableImageNode extends DecoratorNode {
 
   constructor(payload, key) {
     super(key);
+    this.__id = payload.id;
     this.__src = payload.src;
     this.__alt = payload.alt || "";
     this.__width = payload.width;
@@ -64,9 +66,12 @@ export class ResizableImageNode extends DecoratorNode {
 
   createDOM() {
     const el = document.createElement("p");
+    const id = `easy_lexical_image_wrapper_${Date.now() + Math.random()}`;
     el.style.display = "inline-block";
     el.style.position = "relative";
     el.className = "resizable-image-class";
+    el.id = id;
+    this.__id = id;
     el.setAttribute("data-lexical-decorator", "true");
     el.setAttribute("data-lexical-node-key", this.getKey());
     return el;
