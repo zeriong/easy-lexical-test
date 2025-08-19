@@ -52,18 +52,24 @@ export default function BlockTypeToolbar({ editor }) {
   };
 
   useEffect(() => {
+    // ? remove set block type
+    const removeBlockType = editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        updateToolbar();
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
+    // ? 에디터 업데이트 감지
+    const removeUpdateListener = editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => updateToolbar());
+    });
+
     return () => {
-      editor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => updateToolbar());
-      });
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
-          updateToolbar();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      );
+      removeBlockType();
+      removeUpdateListener();
     };
   }, [editor]);
 

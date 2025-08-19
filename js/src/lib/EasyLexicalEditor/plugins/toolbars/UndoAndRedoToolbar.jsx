@@ -13,23 +13,27 @@ export default function UndoAndRedoToolbar({ editor }) {
   const [canRedo, setCanRedo] = useState(false);
 
   useEffect(() => {
+    const removeUndo = editor.registerCommand(
+      CAN_UNDO_COMMAND,
+      (payload) => {
+        setCanUndo(payload);
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
+    const removeRedo = editor.registerCommand(
+      CAN_REDO_COMMAND,
+      (payload) => {
+        setCanRedo(payload);
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
     return () => {
-      editor.registerCommand(
-        CAN_UNDO_COMMAND,
-        (payload) => {
-          setCanUndo(payload);
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      );
-      editor.registerCommand(
-        CAN_REDO_COMMAND,
-        (payload) => {
-          setCanRedo(payload);
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      );
+      removeUndo();
+      removeRedo();
     };
   }, [editor]);
 

@@ -48,6 +48,7 @@ export default function ImageDnDPlugin() {
       },
       COMMAND_PRIORITY_LOW,
     );
+
     return () => {
       removeDnDFile();
     };

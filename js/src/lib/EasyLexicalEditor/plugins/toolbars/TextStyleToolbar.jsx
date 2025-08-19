@@ -84,17 +84,19 @@ export default function TextStyleToolbar({ editor }) {
   );
 
   useEffect(() => {
+    const removeTextStyle = editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        updateToolbar();
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
+
     return () => {
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
-          updateToolbar();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      );
+      removeTextStyle();
     };
-  }, []);
+  }, [editor]);
 
   return (
     <>

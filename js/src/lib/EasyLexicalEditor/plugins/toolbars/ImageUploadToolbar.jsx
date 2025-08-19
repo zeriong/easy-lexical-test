@@ -69,75 +69,79 @@ export default function ImageUploadToolbar({ editor }) {
   };
 
   useEffect(() => {
-    return () => {
-      // ? insert
-      editor.registerCommand(
-        INSERT_RESIZABLE_IMAGE_COMMAND,
-        (payload) => {
-          editor.update(() => {
-            const node = $createResizableImageNode(payload);
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              const top = selection.anchor.getNode().getTopLevelElementOrThrow();
-              top.insertAfter(node);
-              node.selectNext();
-            } else {
-              $getRoot().append(node);
-            }
-          });
-          return true;
-        },
-        COMMAND_PRIORITY_EDITOR,
-      );
-
-      // ? resize & update
-      editor.registerCommand(
-        UPDATE_IMAGE_SIZE_COMMAND,
-        ({ key, width, height }) => {
-          editor.update(() => {
-            const n = $getNodeByKey(key);
-            if (n && n instanceof ResizableImageNode) {
-              n.setSize(width, height);
-            }
-          });
-          return true;
-        },
-        COMMAND_PRIORITY_EDITOR,
-      );
-
-      // ? click시 selection 등록 커맨드
-      editor.registerCommand(
-        CLICK_COMMAND,
-        (event) => {
-          const target = event.target;
-          if (target && target.closest && target.closest(".resizable-image-class")) {
-            const imageElem = target.closest(".resizable-image-class");
-            const nodeKey = imageElem?.getAttribute("data-lexical-node-key");
-            if (nodeKey) {
-              editor.update(() => {
-                const currentSelection = $getSelection();
-
-                // 이미 같은 노드가 선택되어 있다면 그대로 유지
-                if (
-                  currentSelection &&
-                  currentSelection.constructor.name === "NodeSelection" &&
-                  currentSelection.has(nodeKey)
-                ) {
-                  return; // 재설정 안 함
-                }
-
-                // 새로 선택
-                const selection = $createNodeSelection();
-                selection.add(nodeKey);
-                $setSelection(selection);
-              });
-              return true;
-            }
+    // ? insert
+    const removeInsertImage = editor.registerCommand(
+      INSERT_RESIZABLE_IMAGE_COMMAND,
+      (payload) => {
+        editor.update(() => {
+          const node = $createResizableImageNode(payload);
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            const top = selection.anchor.getNode().getTopLevelElementOrThrow();
+            top.insertAfter(node);
+            node.selectNext();
+          } else {
+            $getRoot().append(node);
           }
-          return false;
-        },
-        COMMAND_PRIORITY_EDITOR,
-      );
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+
+    // ? resize & update
+    const removeResizeUpdate = editor.registerCommand(
+      UPDATE_IMAGE_SIZE_COMMAND,
+      ({ key, width, height }) => {
+        editor.update(() => {
+          const n = $getNodeByKey(key);
+          if (n && n instanceof ResizableImageNode) {
+            n.setSize(width, height);
+          }
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+
+    // ? click시 selection 등록 커맨드
+    const removeRegisterSelection = editor.registerCommand(
+      CLICK_COMMAND,
+      (event) => {
+        const target = event.target;
+        if (target && target.closest && target.closest(".resizable-image-class")) {
+          const imageElem = target.closest(".resizable-image-class");
+          const nodeKey = imageElem?.getAttribute("data-lexical-node-key");
+          if (nodeKey) {
+            editor.update(() => {
+              const currentSelection = $getSelection();
+
+              // 이미 같은 노드가 선택되어 있다면 그대로 유지
+              if (
+                currentSelection &&
+                currentSelection.constructor.name === "NodeSelection" &&
+                currentSelection.has(nodeKey)
+              ) {
+                return; // 재설정 안 함
+              }
+
+              // 새로 선택
+              const selection = $createNodeSelection();
+              selection.add(nodeKey);
+              $setSelection(selection);
+            });
+            return true;
+          }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+
+    return () => {
+      removeInsertImage();
+      removeResizeUpdate();
+      removeRegisterSelection();
     };
   }, [editor]);
 

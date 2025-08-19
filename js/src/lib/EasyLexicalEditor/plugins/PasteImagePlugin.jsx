@@ -13,13 +13,13 @@ export default function PasteImagePlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    const removeOver = editor.registerCommand(
+    const removePasteImage = editor.registerCommand(
       PASTE_COMMAND,
       (e) => {
         const clipboardData = e.clipboardData;
         const file = clipboardData?.files[0];
 
-        if (clipboardData && file) {
+        if (clipboardData && file && file.type.includes("image")) {
           editor.update(() => {
             const node = $createResizableImageNode({
               ...file,
@@ -52,7 +52,7 @@ export default function PasteImagePlugin() {
     );
 
     return () => {
-      removeOver();
+      removePasteImage();
     };
   }, [editor]);
   return null;
