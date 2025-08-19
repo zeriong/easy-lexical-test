@@ -31,6 +31,11 @@ import ImageDnDPlugin from "./plugins/ImageDnDPlugin.jsx";
 import PasteImagePlugin from "./plugins/PasteImagePlugin.jsx";
 import ExcelPastePlugin from "./plugins/ExcelPastePlugin.jsx";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import {
+  StyledTableCellNode,
+  StyledTableNode,
+  StyledTableRowNode,
+} from "./nodes/StyledTableNodes.js";
 
 // tagName → key 매핑
 const TAG_STYLE_KEY_MAP = {
@@ -181,10 +186,10 @@ export default function EasyLexicalEditor({
       HeadingNode,
       QuoteNode,
       ResizableImageNode,
-      // excel nodes
-      TableNode,
-      TableCellNode,
-      TableRowNode,
+      // excel custom nodes
+      StyledTableNode,
+      StyledTableRowNode,
+      StyledTableCellNode,
     ],
     onError(error) {
       throw error;
