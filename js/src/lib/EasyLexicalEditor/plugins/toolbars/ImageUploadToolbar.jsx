@@ -7,6 +7,7 @@ import {
   $setSelection,
   CLICK_COMMAND,
   COMMAND_PRIORITY_EDITOR,
+  COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
   PASTE_COMMAND,
 } from "lexical";
@@ -76,15 +77,25 @@ export default function ImageUploadToolbar({ editor }) {
         editor.update(() => {
           const node = $createResizableImageNode(payload);
           const selection = $getSelection();
+
           if ($isRangeSelection(selection)) {
-            const top = selection.anchor.getNode().getTopLevelElementOrThrow();
-            top.insertAfter(node);
+            const anchorNode = selection.anchor.getNode();
+            const top = anchorNode.getTopLevelElement();
+
+            if (top) {
+              // top-level 엘리먼트가 있으면 그 뒤에 삽입
+              top.insertAfter(node);
+            } else {
+              // top-level이 없으면 root에 삽입
+              $getRoot().append(node);
+            }
+
             node.selectNext();
           } else {
+            // selection이 range가 아니면 root에 삽입
             $getRoot().append(node);
           }
         });
-        return true;
       },
       COMMAND_PRIORITY_EDITOR,
     );
@@ -105,26 +116,16 @@ export default function ImageUploadToolbar({ editor }) {
     );
 
     // ? click시 selection 등록 커맨드
-    const removeRegisterSelection = editor.registerCommand(
+    const removeSelection = editor.registerCommand(
       CLICK_COMMAND,
       (event) => {
         const target = event.target;
         if (target && target.closest && target.closest(".resizable-image-class")) {
           const imageElem = target.closest(".resizable-image-class");
           const nodeKey = imageElem?.getAttribute("data-lexical-node-key");
+
           if (nodeKey) {
             editor.update(() => {
-              const currentSelection = $getSelection();
-
-              // 이미 같은 노드가 선택되어 있다면 그대로 유지
-              if (
-                currentSelection &&
-                currentSelection.constructor.name === "NodeSelection" &&
-                currentSelection.has(nodeKey)
-              ) {
-                return; // 재설정 안 함
-              }
-
               // 새로 선택
               const selection = $createNodeSelection();
               selection.add(nodeKey);
@@ -135,13 +136,13 @@ export default function ImageUploadToolbar({ editor }) {
         }
         return false;
       },
-      COMMAND_PRIORITY_EDITOR,
+      COMMAND_PRIORITY_LOW,
     );
 
     return () => {
       removeInsertImage();
       removeResizeUpdate();
-      removeRegisterSelection();
+      removeSelection();
     };
   }, [editor]);
 

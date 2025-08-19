@@ -201,7 +201,7 @@ export default function ResizableImage({
 
     // ! document 기반으로 같은 className이 있는지 재귀적으로 확인하며 없는 고유 클래스 네임을 생성하여 적용
     function createUniqueClassName() {
-      const newId = `easy-lexical-image-wrapper_${Date.now() + Math.random()}`;
+      const newId = `easy_lexical_image_${Date.now() + Math.random()}`;
       const isExists = document.getElementById(newId);
       if (!isExists) {
         // id 저장( 이미지를 개별로 핸들링 가능하도록 )
