@@ -23,12 +23,26 @@ import { $generateHtmlFromNodes } from "@lexical/html";
 
 import TreeViewPlugin from "./plugins/TreeViewPlugin";
 
-import { BasicTheme } from "./contants/common.js";
+import { BasicTheme, BLOCK_INLINE_STYLES } from "./contants/common.js";
 import ToolbarPlugin from "./plugins/ToolbarPlugin.jsx";
 import { ResizableImageNode } from "./nodes/ResizableImageNode.jsx";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import ImageDnDPlugin from "./plugins/ImageDnDPlugin.jsx";
 import PasteImagePlugin from "./plugins/PasteImagePlugin.jsx";
+import ExcelPastePlugin from "./plugins/ExcelPastePlugin.jsx";
+import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+
+// tagName → key 매핑
+const TAG_STYLE_KEY_MAP = {
+  P: "paragraph",
+  BLOCKQUOTE: "quote",
+  H1: "h1",
+  H2: "h2",
+  H3: "h3",
+  H4: "h4",
+  H5: "h5",
+  H6: "h6",
+};
 
 // * 안전한 스타일만을 남김
 const whitelistStylesExportDOM = (editor, target) => {
@@ -39,16 +53,25 @@ const whitelistStylesExportDOM = (editor, target) => {
     if (output.element.getAttribute("dir") === "ltr") {
       output.element.removeAttribute("dir");
     }
-    // 노드에 저장된 style 값 직접 세팅
-    const nodeStyle = target.getStyle?.();
+
+    // 노드에 저장된 style 우선
+    let nodeStyle = target.getStyle?.();
+
+    // style이 비어있다면 block preset에서 가져오기
+    if (!nodeStyle) {
+      const key = TAG_STYLE_KEY_MAP[output.element.tagName];
+      if (key && BLOCK_INLINE_STYLES[key]) {
+        nodeStyle = BLOCK_INLINE_STYLES[key];
+      }
+    }
+
     if (nodeStyle) {
-      // style 속성만 sanitize
+      // style sanitize
       const sanitized = DOMPurify.sanitize(
         `<${output.element.tagName} style="${nodeStyle}"></${output.element.tagName}>`,
         { ALLOWED_ATTR: ["style"], ALLOWED_TAGS: [output.element.tagName.toLowerCase()] },
       );
 
-      // 정규식으로 style 값만 추출
       const match = sanitized.match(/style="([^"]*)"/i);
       if (match) {
         output.element.setAttribute("style", match[1]);
@@ -56,10 +79,6 @@ const whitelistStylesExportDOM = (editor, target) => {
         output.element.removeAttribute("style");
       }
     }
-  }
-  // p 태그의 기본 속성을 없애기 위함
-  if (output.element.tagName === "P") {
-    output.element.setAttribute("style", "margin: 0;");
   }
   return output;
 };
@@ -155,7 +174,18 @@ export default function EasyLexicalEditor({
       import: constructImportMap(),
     },
     namespace: "Easy-Lexical-Editor",
-    nodes: [ParagraphNode, TextNode, ImageNode, HeadingNode, QuoteNode, ResizableImageNode],
+    nodes: [
+      ParagraphNode,
+      TextNode,
+      ImageNode,
+      HeadingNode,
+      QuoteNode,
+      ResizableImageNode,
+      // excel nodes
+      TableNode,
+      TableCellNode,
+      TableRowNode,
+    ],
     onError(error) {
       throw error;
     },
@@ -181,6 +211,7 @@ export default function EasyLexicalEditor({
         <AutoFocusPlugin />
         <ImageDnDPlugin />
         <PasteImagePlugin />
+        <ExcelPastePlugin />
       </>
 
       <div className="editor-container">
