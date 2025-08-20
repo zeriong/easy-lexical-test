@@ -1,14 +1,14 @@
+// nodes/StyledTableNodes.js
 import { TableNode, TableRowNode, TableCellNode } from "@lexical/table";
 
-/** <table> — class 제거, style만 보존 */
+/** <table> */
 export class StyledTableNode extends TableNode {
-  __style;
-
   static getType() {
     return "table";
-  } // 기본 타입 유지(호환성)
+  }
   static clone(node) {
-    return new StyledTableNode(node.__style, node.__key);
+    const n = new StyledTableNode(node.__style, node.__key);
+    return n;
   }
 
   constructor(style = "", key) {
@@ -16,21 +16,31 @@ export class StyledTableNode extends TableNode {
     this.__style = style;
   }
 
-  // 에디터 내부 렌더링
+  getStyle() {
+    return this.getLatest().__style || "";
+  }
+  setStyle(style) {
+    const w = this.getWritable();
+    w.__style = style;
+  }
+
   createDOM(config) {
-    const el = super.createDOM(config); // theme 클래스는 super가 붙임
+    const el = super.createDOM(config);
+    el.setAttribute("data-lexical-node-key", "stamp_" + Date.now());
     if (this.__style) el.setAttribute("style", this.__style);
     return el;
   }
   updateDOM(prev, dom) {
-    if (prev.__style !== this.__style) {
-      if (this.__style) dom.setAttribute("style", this.__style);
-      else dom.removeAttribute("style");
+    const newStyle = dom.getAttribute("style");
+
+    if (prev.__style !== newStyle) {
+      const w = this.getWritable();
+      w.__style = newStyle;
     }
+
     return false;
   }
 
-  // JSON
   static importJSON(json) {
     return new StyledTableNode(json.style || "");
   }
@@ -39,7 +49,6 @@ export class StyledTableNode extends TableNode {
     return { ...base, type: "table", style: this.__style };
   }
 
-  // HTML import/export (fallback)
   static importDOM() {
     return {
       table: (el) => ({
@@ -47,10 +56,11 @@ export class StyledTableNode extends TableNode {
           const st = el.getAttribute("style") || "";
           return { node: new StyledTableNode(st) };
         },
-        priority: 1,
+        priority: 2,
       }),
     };
   }
+
   exportDOM() {
     const el = document.createElement("table");
     if (this.__style) el.setAttribute("style", this.__style);
@@ -58,7 +68,7 @@ export class StyledTableNode extends TableNode {
   }
 }
 
-/** <tr> — class 제거, style만 보존 */
+/** <tr> */
 export class StyledTableRowNode extends TableRowNode {
   __style;
 
@@ -66,12 +76,21 @@ export class StyledTableRowNode extends TableRowNode {
     return "tableRow";
   }
   static clone(node) {
-    return new StyledTableRowNode(node.__height, node.__style, node.__key);
+    const n = new StyledTableRowNode(node.__height, node.__style, node.__key);
+    return n;
   }
 
   constructor(height, style = "", key) {
     super(height, key);
-    this.__style = style;
+    this.__style = style || "";
+  }
+
+  getStyle() {
+    return this.getLatest().__style || "";
+  }
+  setStyle(style) {
+    const w = this.getWritable();
+    w.__style = style || "";
   }
 
   createDOM(config) {
@@ -80,10 +99,13 @@ export class StyledTableRowNode extends TableRowNode {
     return el;
   }
   updateDOM(prev, dom) {
-    if (prev.__style !== this.__style) {
-      if (this.__style) dom.setAttribute("style", this.__style);
-      else dom.removeAttribute("style");
+    const newStyle = dom.getAttribute("style");
+
+    if (prev.__style !== newStyle) {
+      const w = this.getWritable();
+      w.__style = newStyle;
     }
+
     return false;
   }
 
@@ -102,10 +124,11 @@ export class StyledTableRowNode extends TableRowNode {
           const st = el.getAttribute("style") || "";
           return { node: new StyledTableRowNode(undefined, st) };
         },
-        priority: 1,
+        priority: 2,
       }),
     };
   }
+
   exportDOM() {
     const el = document.createElement("tr");
     if (this.__style) el.setAttribute("style", this.__style);
@@ -113,79 +136,105 @@ export class StyledTableRowNode extends TableRowNode {
   }
 }
 
-/** <td>/<th> — class 제거, style만 보존 */
+/** <td>/<th> */
 export class StyledTableCellNode extends TableCellNode {
   __style;
+  __isHeader; // ← 우리가 직접 들고 있는 헤더 플래그
 
   static getType() {
     return "tableCell";
   }
+
   static clone(node) {
     return new StyledTableCellNode(
-      node.__header,
-      node.__colSpan,
-      node.__rowSpan,
+      node.__isHeader, // ← 우리가 가진 플래그 사용
+      1,
+      1,
       node.__style,
       node.__key,
     );
   }
 
-  constructor(header, colSpan, rowSpan, style = "", key) {
-    super(header, colSpan, rowSpan, key);
-    this.__style = style;
+  constructor(isHeader /* boolean */, _colSpan, _rowSpan, style = "", key) {
+    // 병합 제거 정책: 항상 1,1 강제
+    super(!!isHeader, 1, 1, key);
+    this.__isHeader = !!isHeader;
+    this.__style = style || "";
+  }
+
+  getStyle() {
+    return this.getLatest().__style || "";
+  }
+  setStyle(style) {
+    const w = this.getWritable();
+    w.__style = style || "";
+  }
+
+  // 필요하면 헤더 플래그도 세터/게터 제공 가능
+  isHeader() {
+    return !!this.getLatest().__isHeader;
+  }
+  setHeader(isHeader) {
+    const w = this.getWritable();
+    w.__isHeader = !!isHeader;
   }
 
   createDOM(config) {
-    const el = super.createDOM(config); // <td> or <th>
+    const el = super.createDOM(config); // TableCellNode가 header면 <th>, 아니면 <td> 생성
     if (this.__style) el.setAttribute("style", this.__style);
-    // colspan/rowspan 재보강
-    if (this.__colSpan && this.__colSpan !== 1) el.setAttribute("colspan", String(this.__colSpan));
-    if (this.__rowSpan && this.__rowSpan !== 1) el.setAttribute("rowspan", String(this.__rowSpan));
+    el.removeAttribute("colspan");
+    el.removeAttribute("rowspan");
     return el;
   }
+
   updateDOM(prev, dom) {
-    if (prev.__style !== this.__style) {
-      if (this.__style) dom.setAttribute("style", this.__style);
-      else dom.removeAttribute("style");
+    const newStyle = dom.getAttribute("style");
+
+    if (prev.__style !== newStyle) {
+      const w = this.getWritable();
+      w.__style = newStyle;
     }
-    if (prev.__colSpan !== this.__colSpan) {
-      if (this.__colSpan && this.__colSpan !== 1)
-        dom.setAttribute("colspan", String(this.__colSpan));
-      else dom.removeAttribute("colspan");
-    }
-    if (prev.__rowSpan !== this.__rowSpan) {
-      if (this.__rowSpan && this.__rowSpan !== 1)
-        dom.setAttribute("rowspan", String(this.__rowSpan));
-      else dom.removeAttribute("rowspan");
-    }
+
+    // 병합은 강제로 제거
+    dom.removeAttribute("colspan");
+    dom.removeAttribute("rowspan");
     return false;
   }
 
   static importJSON(json) {
-    return new StyledTableCellNode(json.header, json.colSpan, json.rowSpan, json.style || "");
+    // header 정보를 우리가 직접 읽어서 보관
+    const isHeader = !!json.isHeader || !!json.header;
+    return new StyledTableCellNode(isHeader, 1, 1, json.style || "");
   }
+
   exportJSON() {
     const base = super.exportJSON();
-    return { ...base, type: "tableCell", style: this.__style };
+    return {
+      ...base,
+      type: "tableCell",
+      style: this.__style,
+      isHeader: !!this.__isHeader, // ← 우리가 들고 있는 값
+      colSpan: 1,
+      rowSpan: 1,
+    };
   }
 
   static importDOM() {
-    const conv = (el, header) => {
+    const conv = (el, isHeader) => {
       const st = el.getAttribute("style") || "";
-      const cs = parseInt(el.getAttribute("colspan") || "1", 10);
-      const rs = parseInt(el.getAttribute("rowspan") || "1", 10);
-      return { node: new StyledTableCellNode(header, cs, rs, st) };
+      return { node: new StyledTableCellNode(!!isHeader, 1, 1, st) };
     };
     return {
-      td: (el) => ({ conversion: () => conv(el, false), priority: 1 }),
-      th: (el) => ({ conversion: () => conv(el, true), priority: 1 }),
+      td: (el) => ({ conversion: () => conv(el, false), priority: 2 }),
+      th: (el) => ({ conversion: () => conv(el, true), priority: 2 }),
     };
   }
+
   exportDOM() {
-    const el = document.createElement(this.__header ? "th" : "td");
+    // ★ getHeader 같은 내부 API에 의존하지 말고, 우리가 저장한 플래그로 결정
+    const tag = this.__isHeader ? "th" : "td";
+    const el = document.createElement(tag);
     if (this.__style) el.setAttribute("style", this.__style);
-    if (this.__colSpan && this.__colSpan !== 1) el.setAttribute("colspan", String(this.__colSpan));
-    if (this.__rowSpan && this.__rowSpan !== 1) el.setAttribute("rowspan", String(this.__rowSpan));
     return { element: el };
   }
 }
