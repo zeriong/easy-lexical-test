@@ -26,7 +26,7 @@ function App() {
         <EasyLexicalEditor
           showTerminal
           onChange={setGetEditorProps}
-          editorInnerInputHeight={"auto"}
+          // editorInnerInputHeight={"auto"}
         />
         {/*<EasyLexicalEditor onChange={setGetEditorProps} />*/}
 

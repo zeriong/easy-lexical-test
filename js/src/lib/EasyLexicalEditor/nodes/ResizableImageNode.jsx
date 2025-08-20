@@ -150,6 +150,6 @@ export class ResizableImageNode extends DecoratorNode {
 }
 
 export function $createResizableImageNode(payload) {
-  console.log("페이로드", payload);
+  console.log("이미지 페이로드", payload);
   return new ResizableImageNode(payload);
 }
