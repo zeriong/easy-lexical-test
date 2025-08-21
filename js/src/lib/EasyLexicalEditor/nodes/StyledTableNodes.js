@@ -26,7 +26,7 @@ export class StyledTableNode extends TableNode {
 
   createDOM(config) {
     const el = super.createDOM(config);
-    el.setAttribute("data-lexical-node-key", "stamp_" + Date.now());
+    el.setAttribute("data-lexical-node-key", this.__key);
     if (this.__style) el.setAttribute("style", this.__style);
     return el;
   }
@@ -96,6 +96,7 @@ export class StyledTableRowNode extends TableRowNode {
   createDOM(config) {
     const el = super.createDOM(config);
     if (this.__style) el.setAttribute("style", this.__style);
+    el.setAttribute("data-lexical-node-key", this.__key);
     return el;
   }
   updateDOM(prev, dom) {
@@ -182,6 +183,7 @@ export class StyledTableCellNode extends TableCellNode {
   createDOM(config) {
     const el = super.createDOM(config); // TableCellNode가 header면 <th>, 아니면 <td> 생성
     if (this.__style) el.setAttribute("style", this.__style);
+    el.setAttribute("data-lexical-node-key", this.__key);
     el.removeAttribute("colspan");
     el.removeAttribute("rowspan");
     return el;
