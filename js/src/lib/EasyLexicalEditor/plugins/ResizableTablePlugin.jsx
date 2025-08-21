@@ -181,42 +181,6 @@ function positionOverlay(root, overlay, tableEl) {
   overlay.style.borderColor = "dodgerblue";
 }
 
-/** 축별 자식들 auto 강제 (셀 단위) */
-function forceChildrenAxisAuto(el, axis /* 'x' | 'y' */) {
-  const prop = axis === "x" ? "width" : "height";
-  const minProp = axis === "x" ? "minWidth" : "minHeight";
-  const maxProp = axis === "x" ? "maxWidth" : "maxHeight";
-
-  // 직계 자식만 처리 (불필요한 전체 탐색 방지)
-  const children = el?.children || [];
-  for (let i = 0; i < children.length; i++) {
-    const c = children[i];
-    if (!c || !c.style) continue;
-    // inline-style 상에서 auto가 아니면 auto로
-    if (c.style[prop] && c.style[prop] !== "auto") c.style[prop] = "auto";
-    // min/max가 있으면 풀어줘야 자식이 따라 늘어남
-    if (c.style[minProp]) c.style[minProp] = "";
-    if (c.style[maxProp]) c.style[maxProp] = "";
-  }
-}
-
-/** 축별 테이블 후손들 auto 강제 (테이블 전체 리사이즈용) */
-function forceAxisAutoForTableDescendants(tableEl, axis /* 'x' | 'y' */) {
-  if (axis === "x") return;
-  const prop = "height";
-  const minProp = "minHeight";
-
-  if (!tableEl) return;
-
-  // tr/td/th 에 걸린 고정값 해제
-  tableEl.querySelectorAll("tr,td,th").forEach((node) => {
-    const s = node.style;
-    if (!s) return;
-    s[prop] = "auto";
-    s[minProp] = "fit-content";
-  });
-}
-
 export default function ResizableTablePlugin() {
   const [editor] = useLexicalComposerContext();
 
@@ -463,32 +427,21 @@ export default function ResizableTablePlugin() {
       drag.current.tableInitW = tableRect.width;
       drag.current.tableInitH = tableRect.height;
 
-      // 컬럼/행 (테이블 리사이즈가 아닐 때만)
-      if (!drag.current.resizeTableX && (nearLeft || nearRight)) {
-        drag.current.colIndex = nearLeft ? Math.max(0, t.cellIndex - 1) : t.cellIndex;
-        drag.current.colTargets = getColumnCells(table, drag.current.colIndex);
-        drag.current.initColW = drag.current.colTargets.map(
-          (cell) => cell.getBoundingClientRect().width,
-        );
-      } else {
-        drag.current.colIndex = -1;
-        drag.current.colTargets = [];
-        drag.current.initColW = [];
-      }
-      if (!drag.current.resizeTableY && (nearTop || nearBottom)) {
-        const rowIndex = nearTop
-          ? Math.max(0, (t.parentElement?.rowIndex ?? 0) - 1)
-          : (t.parentElement?.rowIndex ?? -1);
-        drag.current.rowIndex = rowIndex < 0 ? 0 : rowIndex;
-        drag.current.rowTargets = getRowCells(table, drag.current.rowIndex);
-        drag.current.initRowH = drag.current.rowTargets.map(
-          (cell) => cell.getBoundingClientRect().height,
-        );
-      } else {
-        drag.current.rowIndex = -1;
-        drag.current.rowTargets = [];
-        drag.current.initRowH = [];
-      }
+      // 컬럼/행
+      drag.current.colIndex = nearLeft ? Math.max(0, t.cellIndex - 1) : t.cellIndex;
+      drag.current.colTargets = getColumnCells(table, drag.current.colIndex);
+      drag.current.initColW = drag.current.colTargets.map(
+        (cell) => cell.getBoundingClientRect().width,
+      );
+
+      const rowIndex = nearTop
+        ? Math.max(0, (t.parentElement?.rowIndex ?? 0) - 1)
+        : (t.parentElement?.rowIndex ?? -1);
+      drag.current.rowIndex = rowIndex < 0 ? 0 : rowIndex;
+      drag.current.rowTargets = getRowCells(table, drag.current.rowIndex);
+      drag.current.initRowH = drag.current.rowTargets.map(
+        (cell) => cell.getBoundingClientRect().height,
+      );
 
       // 캡처 & 커서
       document.body.style.userSelect = "none";
@@ -497,6 +450,7 @@ export default function ResizableTablePlugin() {
       } catch (e) {
         console.log("error: ", e);
       }
+
       if ((nearLeft && nearTop) || (nearRight && nearBottom)) {
         document.body.style.cursor = CURSOR_NWSE;
       } else if ((nearRight && nearTop) || (nearLeft && nearBottom)) {
@@ -511,62 +465,53 @@ export default function ResizableTablePlugin() {
     };
 
     /** 드래그 중 */
+
     /** 드래그 중 */
     const onPointerMove = (e) => {
       if (!drag.current.active || drag.current.pointerId !== e.pointerId) return;
 
-      // --- 테이블 전체 리사이즈 ---
+      console.log("일단 들어옴");
+
+      // 테이블 전체 (가로/세로 모두)
       if (drag.current.resizeTableX) {
+        console.log("X라고 함");
         const dx = e.clientX - drag.current.startX;
         const w = Math.max(100, Math.round(drag.current.tableInitW + dx));
+        console.log("w?????", w);
         drag.current.table.style.width = `${w}px`;
         drag.current.table.style.minWidth = `${w}px`;
-
-        // 가로 리사이즈 시 후손들의 width 고정값을 즉시 auto로
-        forceAxisAutoForTableDescendants(drag.current.table, "x");
       }
       if (drag.current.resizeTableY) {
+        console.log("Y라고 함");
         const dy = e.clientY - drag.current.startY;
         const h = Math.max(40, Math.round(drag.current.tableInitH + dy));
+        console.log("h?????", h);
+        console.log("아니 왜 드래그가 안됨?", drag.current.table);
         drag.current.table.style.height = `${h}px`;
         drag.current.table.style.minHeight = `${h}px`;
-
-        // 세로 리사이즈 시 후손들의 height 고정값을 즉시 auto로
-        forceAxisAutoForTableDescendants(drag.current.table, "y");
       }
 
-      // --- 컬럼(가로) 리사이즈 ---
-      if (!drag.current.resizeTableX && (drag.current.useLeft || drag.current.useRight)) {
-        const dx = e.clientX - drag.current.startX;
-        drag.current.colTargets.forEach((cell, i) => {
-          const w = Math.max(MIN_COL, Math.round(drag.current.initColW[i] + dx));
-          cell.style.width = `${w}px`;
-          cell.style.minWidth = `${w}px`;
+      // 컬럼/행
+      const dx = e.clientX - drag.current.startX;
+      drag.current.colTargets.forEach((cell, i) => {
+        const w = Math.max(MIN_COL, Math.round(drag.current.initColW[i] + dx));
+        cell.style.width = `${w}px`;
+        cell.style.minWidth = `${w}px`;
+      });
 
-          // 해당 셀의 직계 자식들 width 고정값 풀기
-          forceChildrenAxisAuto(cell, "x");
-        });
-      }
+      const dy = e.clientY - drag.current.startY;
+      drag.current.rowTargets.forEach((cell, i) => {
+        const h = Math.max(MIN_ROW, Math.round(drag.current.initRowH[i] + dy));
+        cell.style.height = `${h}px`;
+        cell.style.minHeight = `${h}px`;
+        const tr = cell.parentElement;
+        if (tr) {
+          tr.style.height = `${h}px`;
+          tr.style.minHeight = `${h}px`;
+        }
+      });
 
-      // --- 행(세로) 리사이즈 ---
-      if (!drag.current.resizeTableY && (drag.current.useTop || drag.current.useBottom)) {
-        const dy = e.clientY - drag.current.startY;
-        drag.current.rowTargets.forEach((cell, i) => {
-          const h = Math.max(MIN_ROW, Math.round(drag.current.initRowH[i] + dy));
-          cell.style.height = `${h}px`;
-          cell.style.minHeight = `${h}px`;
-          const tr = cell.parentElement;
-          if (tr) {
-            tr.style.height = `${h}px`;
-            tr.style.minHeight = `${h}px`;
-          }
-
-          // 해당 셀의 직계 자식들 height 고정값 풀기
-          forceChildrenAxisAuto(cell, "y");
-        });
-      }
-
-      // 오버레이 추적
+      // 오버레이 실시간 추적
       const { tableKey } = selected.current;
       if (tableKey) {
         const tableEl = editor.getElementByKey(tableKey);
@@ -591,27 +536,15 @@ export default function ResizableTablePlugin() {
 
           console.log("rect??????", rect);
 
-          if (drag.current.resizeTableX) {
-            const pxW = Math.max(100, Math.round(rect.width));
-            next = setStyleProp(next, "width", `${pxW}px`);
-            next = setStyleProp(next, "min-width", `${pxW}px`);
-            // 필요하면 max-width도 함께 고정
-            // next = setStyleProp(next, "max-width", `${pxW}px`);
-          }
-          if (drag.current.resizeTableY) {
-            const pxH = Math.max(40, Math.round(rect.height));
-            next = setStyleProp(next, "height", `${pxH}px`);
-            next = setStyleProp(next, "min-height", `${pxH}px`);
-          }
+          // 테이블 너비 지정
+          const pxW = Math.max(100, Math.round(rect.width));
+          next = setStyleProp(next, "width", `${pxW}px`);
 
-          console.log("이름이 왜 넥스트?", next);
+          console.log("콜 타겟츠: ", drag.current.colTargets);
+          console.log("로우 타겟츠: ", drag.current.rowTargets);
 
-          tableNode.setStyle(next);
-        }
-
-        // 2) 열 커밋 (이미 StyledTableCellNode 패턴으로 바꾸신 부분 유지 + 약간 정리)
-        if (!drag.current.resizeTableX) {
-          drag.current.colTargets.forEach((cell) => {
+          // ! 2) 열 커밋
+          drag.current.colTargets?.forEach((cell) => {
             const key = cell.getAttribute("data-lexical-node-key");
             if (!key) return;
 
@@ -622,28 +555,32 @@ export default function ResizableTablePlugin() {
             const px = Math.max(MIN_COL, Math.round(rect.width));
             let next = node.getStyle() || "";
             next = setStyleProp(next, "width", `${px}px`);
-            next = setStyleProp(next, "min-width", `${px}px`);
             node.setStyle(next);
           });
-        }
 
-        // 3) 행 커밋 (+ 각 셀 height, 행 height 반영)
-        if (!drag.current.resizeTableY) {
-          drag.current.rowTargets.forEach((cell) => {
+          // 테이블 높이 지정
+          const pxH = Math.max(40, Math.round(rect.height));
+          next = setStyleProp(next, "height", `${pxH}px`);
+
+          // ! 3) 행 커밋
+          drag.current.rowTargets?.forEach((cell) => {
+            console.log("행커밋 step1");
             const key = cell.getAttribute("data-lexical-node-key");
             if (!key) return;
+            console.log("행커밋 step2");
 
             const node = $getNodeByKey(key);
             if (!(node instanceof StyledTableCellNode)) return;
+            console.log("행커밋 step3");
 
             // 셀 높이 커밋
             const rect = cell.getBoundingClientRect();
+            console.log("행커밋 step4 rect-height: ", rect.height);
             const py = Math.max(MIN_ROW, Math.round(rect.height));
             let cellStyle = node.getStyle() || "";
             cellStyle = setStyleProp(cellStyle, "height", `${py}px`);
-            cellStyle = setStyleProp(cellStyle, "min-height", `${py}px`);
             node.setStyle(cellStyle);
-
+            console.log("행커밋 step5 cellStyle: ", cellStyle);
             // 행 높이 커밋 (부모)
             const row = node.getParent();
             if (row instanceof StyledTableRowNode) {
@@ -652,6 +589,10 @@ export default function ResizableTablePlugin() {
               row.setStyle(rowStyle);
             }
           });
+
+          console.log("이름이 왜 넥스트?", next);
+
+          tableNode.setStyle(next);
         }
       });
 
