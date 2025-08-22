@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getNodeByKey, $getSelection, $isRangeSelection } from "lexical";
-import {
-  StyledTableCellNode,
-  StyledTableNode,
-  StyledTableRowNode,
-} from "../nodes/StyledTableNodes.js";
+import { StyledTableCellNode } from "../nodes/table/StyledTableCellNode.js";
+import { StyledTableRowNode } from "../nodes/table/StyledTableRowNode.js";
 
 /** ===== 설정 ===== */
 const EDGE = 6;
@@ -110,17 +107,27 @@ function ensureOverlay(root) {
     root.appendChild(overlay);
   }
 
+  // sticky host (full-width, 우측 정렬)
+  let host = root.querySelector(":scope > .lex-table-toolbar-host");
+  if (!host) {
+    host = document.createElement("div");
+    host.className = "lex-table-toolbar-host";
+    host.style.position = "sticky";
+    host.style.top = "15px";
+    host.style.zIndex = "11";
+    host.style.display = "flex";
+    host.style.justifyContent = "flex-end";
+    host.style.pointerEvents = "none"; // 자식에만 이벤트
+    root.prepend(host);
+  }
+
   // 툴바
-  let toolbar = root.querySelector(":scope > .lex-table-toolbar");
+  let toolbar = host.querySelector(":scope > .lex-table-toolbar");
   if (!toolbar) {
     toolbar = document.createElement("div");
     toolbar.className = "lex-table-toolbar";
     toolbar.style.pointerEvents = "auto";
-    toolbar.style.position = "sticky";
-    toolbar.style.display = "flex";
-    toolbar.style.top = "15px";
-    toolbar.style.left = "100%";
-    toolbar.style.zIndex = "11";
+    toolbar.style.position = "absolute";
     toolbar.style.display = "none";
     toolbar.style.padding = "6px";
     toolbar.style.borderRadius = "8px";
@@ -156,7 +163,7 @@ function ensureOverlay(root) {
       "열 삭제",
     ];
     labels.forEach((lab) => toolbar.appendChild(mkBtn(lab)));
-    root.prepend(toolbar);
+    host.appendChild(toolbar);
   }
 
   return { overlay, toolbar };
@@ -470,23 +477,23 @@ export default function ResizableTablePlugin() {
     const onPointerMove = (e) => {
       if (!drag.current.active || drag.current.pointerId !== e.pointerId) return;
 
-      console.log("일단 들어옴");
+      // console.log("일단 들어옴");
 
       // 테이블 전체 (가로/세로 모두)
       if (drag.current.resizeTableX) {
-        console.log("X라고 함");
+        // console.log("X라고 함");
         const dx = e.clientX - drag.current.startX;
         const w = Math.max(100, Math.round(drag.current.tableInitW + dx));
-        console.log("w?????", w);
+        // console.log("w?????", w);
         drag.current.table.style.width = `${w}px`;
         drag.current.table.style.minWidth = `${w}px`;
       }
       if (drag.current.resizeTableY) {
-        console.log("Y라고 함");
+        // console.log("Y라고 함");
         const dy = e.clientY - drag.current.startY;
         const h = Math.max(40, Math.round(drag.current.tableInitH + dy));
-        console.log("h?????", h);
-        console.log("아니 왜 드래그가 안됨?", drag.current.table);
+        // console.log("h?????", h);
+        // console.log("아니 왜 드래그가 안됨?", drag.current.table);
         drag.current.table.style.height = `${h}px`;
         drag.current.table.style.minHeight = `${h}px`;
       }
@@ -528,20 +535,21 @@ export default function ResizableTablePlugin() {
       editor.update(() => {
         // 1) 테이블 width/height 커밋 (export 보장)
         const tableKey = drag.current.table.getAttribute("data-lexical-node-key");
+
         if (tableKey) {
           const tableNode = $getNodeByKey(tableKey);
-          console.log("테이블노드 ㅋㅋ", tableNode);
+          // console.log("테이블노드 ㅋㅋ", tableNode);
           const rect = drag.current.table.getBoundingClientRect();
           let next = tableNode?.getStyle() || "";
 
-          console.log("rect??????", rect);
+          // console.log("rect??????", rect);
 
           // 테이블 너비 지정
           const pxW = Math.max(100, Math.round(rect.width));
           next = setStyleProp(next, "width", `${pxW}px`);
 
-          console.log("콜 타겟츠: ", drag.current.colTargets);
-          console.log("로우 타겟츠: ", drag.current.rowTargets);
+          // console.log("콜 타겟츠: ", drag.current.colTargets);
+          // console.log("로우 타겟츠: ", drag.current.rowTargets);
 
           // ! 2) 열 커밋
           drag.current.colTargets?.forEach((cell) => {
@@ -564,23 +572,23 @@ export default function ResizableTablePlugin() {
 
           // ! 3) 행 커밋
           drag.current.rowTargets?.forEach((cell) => {
-            console.log("행커밋 step1");
+            // console.log("행커밋 step1");
             const key = cell.getAttribute("data-lexical-node-key");
             if (!key) return;
-            console.log("행커밋 step2");
+            // console.log("행커밋 step2");
 
             const node = $getNodeByKey(key);
             if (!(node instanceof StyledTableCellNode)) return;
-            console.log("행커밋 step3");
+            // console.log("행커밋 step3");
 
             // 셀 높이 커밋
             const rect = cell.getBoundingClientRect();
-            console.log("행커밋 step4 rect-height: ", rect.height);
+            // console.log("행커밋 step4 rect-height: ", rect.height);
             const py = Math.max(MIN_ROW, Math.round(rect.height));
             let cellStyle = node.getStyle() || "";
             cellStyle = setStyleProp(cellStyle, "height", `${py}px`);
             node.setStyle(cellStyle);
-            console.log("행커밋 step5 cellStyle: ", cellStyle);
+            // console.log("행커밋 step5 cellStyle: ", cellStyle);
             // 행 높이 커밋 (부모)
             const row = node.getParent();
             if (row instanceof StyledTableRowNode) {
@@ -590,7 +598,7 @@ export default function ResizableTablePlugin() {
             }
           });
 
-          console.log("이름이 왜 넥스트?", next);
+          // console.log("이름이 왜 넥스트?", next);
 
           tableNode.setStyle(next);
         }
