@@ -28,14 +28,15 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import ImageDnDPlugin from "./plugins/ImageDnDPlugin.jsx";
 import PasteImagePlugin from "./plugins/PasteImagePlugin.jsx";
 import ExcelPastePlugin from "./plugins/ExcelPastePlugin.jsx";
-import {
-  StyledTableCellNode,
-  StyledTableNode,
-  StyledTableRowNode,
-} from "./nodes/StyledTableNodes.js";
+
 import ResizableTablePlugin from "./plugins/ResizableTablePlugin.jsx";
 import { buildInlineStyleImportMap } from "./utils/editorImporter.js";
 import { whitelistStylesExportDOM } from "./utils/editorExporter.js";
+import { StyledTableNode } from "./nodes/table/StyledTableNode.js";
+import { StyledTableRowNode } from "./nodes/table/StyledTableRowNode.js";
+import { StyledTableCellNode } from "./nodes/table/StyledTableCellNode.js";
+import { useState } from "react";
+import LoadingCover from "./components/LoadingCover.jsx";
 
 const exportMap = new Map([
   [ParagraphNode, whitelistStylesExportDOM],
@@ -87,6 +88,8 @@ export default function EasyLexicalEditor({
     theme: BasicTheme,
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   function handleChange(editorState, editor) {
     editorState.read(() => {
       const text = $getRoot().getTextContent(); // 순수 텍스트
@@ -101,13 +104,16 @@ export default function EasyLexicalEditor({
     <LexicalComposer initialConfig={editorConfig}>
       {/* plugins */}
       <>
+        {/* 기능 프럴그인 */}
         <OnChangePlugin onChange={handleChange} />
         <HistoryPlugin />
         <AutoFocusPlugin />
-        <ImageDnDPlugin />
-        <PasteImagePlugin />
-        <ExcelPastePlugin />
         <ResizableTablePlugin />
+
+        {/* 파일을 필요로 하는 플러그인 */}
+        <ImageDnDPlugin saveServerFetcher={saveServerFetcher} />
+        <PasteImagePlugin saveServerFetcher={saveServerFetcher} />
+        <ExcelPastePlugin saveServerFetcher={saveServerFetcher} />
       </>
 
       <div className="editor-container">
@@ -133,10 +139,20 @@ export default function EasyLexicalEditor({
             }
             ErrorBoundary={LexicalErrorBoundary}
           />
+
+          {/*<LoadingCover isLoading={!isLoading} />*/}
         </div>
 
         {/* Test terminal Plugin */}
         {showTerminal && <TreeViewPlugin />}
+
+        <div
+          onClick={() => {
+            setIsLoading(!isLoading);
+          }}
+        >
+          로딩 띄우기 토글
+        </div>
       </div>
     </LexicalComposer>
   );

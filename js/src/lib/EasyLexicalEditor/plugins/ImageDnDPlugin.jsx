@@ -9,7 +9,11 @@ import {
 } from "lexical";
 import { $createResizableImageNode } from "../nodes/ResizableImageNode.jsx";
 
-export default function ImageDnDPlugin() {
+/**
+ * @param {Object} props
+ * @param {() => Promise<string>} props.saveServerFetcher
+ * */
+export default function ImageDnDPlugin({ saveServerFetcher }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
