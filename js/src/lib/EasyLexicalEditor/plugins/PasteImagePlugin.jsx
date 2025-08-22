@@ -9,7 +9,11 @@ import {
 import { $createResizableImageNode } from "../nodes/ResizableImageNode.jsx";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
-export default function PasteImagePlugin() {
+/**
+ * @param {Object} props
+ * @param {() => Promise<string>} props.saveServerFetcher
+ * */
+export default function PasteImagePlugin({ saveServerFetcher }) {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {

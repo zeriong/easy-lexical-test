@@ -71,3 +71,10 @@ import { createCommand } from "lexical";
 
 export const INSERT_RESIZABLE_IMAGE_COMMAND = createCommand("INSERT_RESIZABLE_IMAGE");
 export const UPDATE_IMAGE_SIZE_COMMAND = createCommand("UPDATE_IMAGE_SIZE");
+
+export const INIT_MOTION_OPTION = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.2, ease: "easeInOut" },
+};
