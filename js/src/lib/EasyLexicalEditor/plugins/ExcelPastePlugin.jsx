@@ -11,12 +11,11 @@ import {
   $createLineBreakNode,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  StyledTableNode,
-  StyledTableRowNode,
-  StyledTableCellNode,
-} from "../nodes/StyledTableNodes.js";
 import { parseCssRules, mergeStyles } from "../utils/cssInline.js";
+import { StyledTableRowNode } from "../nodes/table/StyledTableRowNode.js";
+import { StyledTableNode } from "../nodes/table/StyledTableNode.js";
+import { StyledTableCellNode } from "../nodes/table/StyledTableCellNode.js";
+import { $insertLineBreakNode } from "../utils/common.js";
 
 /** 블록 태그: 만나면 새 Paragraph로 분할 */
 const BLOCK_TAGS = new Set([
@@ -288,6 +287,9 @@ export default function ExcelPastePlugin() {
 
           if (tableEl) {
             editor.update(() => {
+              // 공백라인 추가
+              $insertLineBreakNode();
+
               // table style (베이스는 마지막에 넣지 않음)
               const tableStyle = mergeStyles(
                 byTag.get("table") || "",
@@ -372,6 +374,9 @@ export default function ExcelPastePlugin() {
               const sel = $getSelection();
               if ($isRangeSelection(sel)) sel.insertNodes([tableNode]);
               else $getRoot().append(tableNode);
+
+              // 공백라인 추가
+              $insertLineBreakNode();
             });
 
             return true;
