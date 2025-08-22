@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
+import { $createLineBreakNode, $insertNodes } from "lexical";
 
 const MIN_ALLOWED_FONT_SIZE = 8;
 const MAX_ALLOWED_FONT_SIZE = 72;
@@ -40,4 +41,10 @@ export function styleStringToObject(styleString) {
       }
       return acc;
     }, {});
+}
+
+// 공백 라인 추가 함수
+export function $insertLineBreakNode() {
+  const lineBreakNode = $createLineBreakNode();
+  $insertNodes([lineBreakNode]);
 }
