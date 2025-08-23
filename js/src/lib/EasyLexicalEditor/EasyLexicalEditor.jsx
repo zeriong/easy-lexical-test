@@ -35,8 +35,9 @@ import { whitelistStylesExportDOM } from "./utils/editorExporter.js";
 import { StyledTableNode } from "./nodes/table/StyledTableNode.js";
 import { StyledTableRowNode } from "./nodes/table/StyledTableRowNode.js";
 import { StyledTableCellNode } from "./nodes/table/StyledTableCellNode.js";
-import { useState } from "react";
 import LoadingCover from "./components/LoadingCover.jsx";
+import { Toasts } from "./components/Toasts.jsx";
+import { useToastStore } from "./store/toastStore.jsx";
 
 const exportMap = new Map([
   [ParagraphNode, whitelistStylesExportDOM],
@@ -88,8 +89,9 @@ export default function EasyLexicalEditor({
     theme: BasicTheme,
   };
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToastStore();
 
+  // ? 온체인지 핸들 함수
   function handleChange(editorState, editor) {
     editorState.read(() => {
       const text = $getRoot().getTextContent(); // 순수 텍스트
@@ -98,6 +100,22 @@ export default function EasyLexicalEditor({
       // console.log("온체인지", { text, html, json });
       onChange({ editorState, editor, text, html, json });
     });
+  }
+
+  // ? save server fetch 핸들 함수
+  async function handleSaveServerFetcher() {
+    try {
+      setIsLoading(true);
+      const saveUrl = await saveServerFetcher();
+      if (saveUrl) {
+        return saveUrl;
+      }
+    } catch (e) {
+      console.error("save server error: ", e);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -111,9 +129,9 @@ export default function EasyLexicalEditor({
         <ResizableTablePlugin />
 
         {/* 파일을 필요로 하는 플러그인 */}
-        <ImageDnDPlugin saveServerFetcher={saveServerFetcher} />
-        <PasteImagePlugin saveServerFetcher={saveServerFetcher} />
-        <ExcelPastePlugin saveServerFetcher={saveServerFetcher} />
+        <ImageDnDPlugin saveServerFetcher={handleSaveServerFetcher} />
+        <PasteImagePlugin saveServerFetcher={handleSaveServerFetcher} />
+        <ExcelPastePlugin saveServerFetcher={handleSaveServerFetcher} />
       </>
 
       <div className="editor-container">
@@ -140,19 +158,14 @@ export default function EasyLexicalEditor({
             ErrorBoundary={LexicalErrorBoundary}
           />
 
-          {/*<LoadingCover isLoading={!isLoading} />*/}
+          {/* 로딩커버 */}
+          <LoadingCover />
+          {/* 토스트 */}
+          <Toasts />
         </div>
 
         {/* Test terminal Plugin */}
         {showTerminal && <TreeViewPlugin />}
-
-        <div
-          onClick={() => {
-            setIsLoading(!isLoading);
-          }}
-        >
-          로딩 띄우기 토글
-        </div>
       </div>
     </LexicalComposer>
   );

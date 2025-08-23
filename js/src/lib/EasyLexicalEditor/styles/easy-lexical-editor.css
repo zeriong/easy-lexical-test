@@ -8,6 +8,7 @@
 * {
     box-sizing: border-box;
 }
+
 body {
     margin: 0;
     background: #eee;
@@ -59,6 +60,7 @@ h1 {
     overflow: auto;
     flex-grow: 1;
 }
+
 .editor-inner p {
     margin: 0;
 }
@@ -166,6 +168,7 @@ h1 {
     text-align: right;
     min-width: 25px;
 }
+
 .editor-code:after {
     content: attr(data-highlight-language);
     top: 0;
@@ -452,6 +455,62 @@ pre::-webkit-scrollbar-thumb {
     }
 }
 
+/* 토스트 */
+.editor-toast-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    max-width: 720px;
+    display: none; /* hidden */
+    opacity: 0;
+    align-items: center;
+    padding: 6px 12px 6px 6px;
+    border-radius: 32px;
+    border: 1px solid #d1d5db;
+    background-color: #ffffff;
+    color: #1f2937;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    transition: all 300ms ease-in-out;
+
+    & .editor-toast-content-wrapper {
+        display: flex;
+        align-items: center;
+
+        & .editor-toast-content{
+            width: 100%;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #374151; /* text-gray-700 */
+            transform: translateY(-1px);
+        }
+
+
+        & i {
+            min-width: 24px;
+            min-height: 24px;
+            background: no-repeat center center;
+            background-size: 100%;
+            margin-right: 6px;
+
+            &.success {
+                background-image: url(../assets/icons/toast/success-icon.svg)
+            }
+            &.warn {
+                background-image: url(../assets/icons/toast/warn-icon.svg)
+            }
+            &.error {
+                background-image: url(../assets/icons/toast/error-icon.svg)
+            }
+        }
+    }
+}
+
 /* icons url */
 i.undo {
     background-image: url(../assets/icons/arrow-counterclockwise.svg);
@@ -492,6 +551,7 @@ i.right-align {
 i.justify-align {
     background-image: url(../assets/icons/justify.svg);
 }
+
 i.image-upload {
     background-image: url(../assets/icons/image.svg);
 }
