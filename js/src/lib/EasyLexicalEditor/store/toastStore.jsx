@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { renderToString } from "react-dom/server";
 
 /**
  * @typedef {"success" | "warn" | "error"} ToastType
@@ -42,26 +43,26 @@ export const useToastStore = create(
       /** @param {string | import("react").ReactNode} message */
       (message) => {
         setState((state) => ({
-          toasts: [...state.toasts, { message, type: "success" }],
+          toasts: [...state.toasts, { message: renderToString(message), type: "success" }],
         }));
       },
       {
         /** @param {string | import("react").ReactNode} message */
         success: (message) => {
           setState((state) => ({
-            toasts: [...state.toasts, { message, type: "success" }],
+            toasts: [...state.toasts, { message: renderToString(message), type: "success" }],
           }));
         },
         /** @param {string | import("react").ReactNode} message */
         warn: (message) => {
           setState((state) => ({
-            toasts: [...state.toasts, { message, type: "warn" }],
+            toasts: [...state.toasts, { message: renderToString(message), type: "warn" }],
           }));
         },
         /** @param {string | import("react").ReactNode} message */
         error: (message) => {
           setState((state) => ({
-            toasts: [...state.toasts, { message, type: "error" }],
+            toasts: [...state.toasts, { message: renderToString(message), type: "error" }],
           }));
         },
       },
