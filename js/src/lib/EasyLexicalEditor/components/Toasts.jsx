@@ -12,9 +12,15 @@ import DOMPurify from "dompurify";
  * addToast(<div className="text-red-500">빨간 글자 토스트!</div>);
  *
  * @param {Object} props
- * @param {React.CSSProperties} props.containerStyle
+ * @param {React.CSSProperties} props.containerStyle - 컨테이너 inline-style
+ * @param {number} props.showingDuration - 토스트 표시 ms기준 유지시간 ( default: 5000 )
+ * @param {boolean} props.isAutoHidden - 토스트 클릭하기 전까지 띄운상태를 유지 ( default: true )
  */
-export const Toasts = ({ containerStyle = {} }) => {
+export const Toasts = ({ containerStyle = {}, showingDuration = 5000, isAutoHidden = true }) => {
+  const showStartTimeoutRef = useRef(null);
+  const showEndTimeoutRef = useRef(null);
+  const hiddenTimeoutRef = useRef(null);
+
   const toastDivRef = useRef(null);
   const prevMessage = useRef(null);
   const isRunRef = useRef(false);
@@ -22,6 +28,40 @@ export const Toasts = ({ containerStyle = {} }) => {
   const [iconClassName, setIconClassName] = useState("/assets/svg/toast/success-icon.svg");
 
   const toastStore = useToastStore();
+
+  // ? 타임아웃 해제 함수
+  function clearTimeoutFunction(timeoutRef) {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }
+
+  /**
+   * 토스트 메시지를 숨기는 함수
+   * @returns {void}
+   */
+  const hidden = () => {
+    clearTimeoutFunction(showEndTimeoutRef);
+
+    if (toastDivRef.current?.style) {
+      toastDivRef.current.style.top = "0";
+      toastDivRef.current.style.opacity = "0";
+    }
+
+    hiddenTimeoutRef.current = setTimeout(() => {
+      if (toastDivRef.current?.style) {
+        toastDivRef.current.style.display = "none";
+      }
+
+      if (useToastStore.getState().toasts.length !== 0) {
+        useToastStore.getState().removeToast();
+        show();
+      } else {
+        isRunRef.current = false;
+      }
+    }, 300);
+  };
 
   /**
    * 토스트 메시지를 표시하는 함수
@@ -58,32 +98,18 @@ export const Toasts = ({ containerStyle = {} }) => {
       setIconClassName(toastType);
 
       // 등장 트랜지션
-      setTimeout(() => {
+      showStartTimeoutRef.current = setTimeout(() => {
         if (toastDivRef.current?.style) {
           toastDivRef.current.style.top = "12px";
           toastDivRef.current.style.opacity = "1";
         }
 
         // 일정 시간 뒤 숨김
-        setTimeout(() => {
-          if (toastDivRef.current?.style) {
-            toastDivRef.current.style.top = "0";
-            toastDivRef.current.style.opacity = "0";
-          }
-
-          setTimeout(() => {
-            if (toastDivRef.current?.style) {
-              toastDivRef.current.style.display = "none";
-            }
-
-            if (useToastStore.getState().toasts.length !== 0) {
-              useToastStore.getState().removeToast();
-              show();
-            } else {
-              isRunRef.current = false;
-            }
-          }, 300);
-        }, 2500);
+        if (isAutoHidden) {
+          showEndTimeoutRef.current = setTimeout(() => {
+            hidden();
+          }, showingDuration);
+        }
       });
     } else {
       prevMessage.current = null;
@@ -98,8 +124,23 @@ export const Toasts = ({ containerStyle = {} }) => {
     }
   }, [useToastStore.getState().toasts]);
 
+  // init effect
+  useEffect(() => {
+    // cleanup
+    return () => {
+      clearTimeoutFunction(showEndTimeoutRef);
+      clearTimeoutFunction(showStartTimeoutRef);
+      clearTimeoutFunction(hiddenTimeoutRef);
+    };
+  }, []);
+
   return (
-    <div ref={toastDivRef} className={`editor-toast-container`} style={containerStyle}>
+    <div
+      ref={toastDivRef}
+      className={`editor-toast-container`}
+      style={containerStyle}
+      onClick={hidden}
+    >
       {toastStore.toasts.length >= 0 && (
         <div className="editor-toast-content-wrapper">
           <i className={iconClassName} />
