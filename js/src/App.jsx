@@ -9,6 +9,14 @@ function App() {
 
   const [getEditorProps, setGetEditorProps] = useState(null);
 
+  function allClear() {
+    setContentList([]);
+  }
+  function popClear() {
+    const deepCopy = JSON.parse(JSON.stringify(contentList));
+    deepCopy.pop();
+    setContentList(deepCopy);
+  }
   // ? test submit
   function onSubmit() {
     console.log("서브밋", getEditorProps);
@@ -21,7 +29,7 @@ function App() {
 
   return (
     <>
-      <TestHeader onSubmit={onSubmit} />
+      <TestHeader onSubmit={onSubmit} allClear={allClear} popClear={popClear} />
       <div className={"easy_lexical_test_container"}>
         <div className={"easy_lexical_test_inner"}>
           <p className={"easy_lexical_test_title"}>Hello!</p>

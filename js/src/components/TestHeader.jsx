@@ -1,7 +1,7 @@
 import { useToastStore } from "../lib/EasyLexicalEditor/store/toastStore.jsx";
 import { useEditorStore } from "../lib/EasyLexicalEditor/store/editorStore.js";
 
-export default function TestHeader({ onSubmit }) {
+export default function TestHeader({ onSubmit, allClear, popClear }) {
   const { addToast } = useToastStore();
   const { setIsLoading, isLoading } = useEditorStore();
 
@@ -9,6 +9,24 @@ export default function TestHeader({ onSubmit }) {
     <header className={"easy_lexical_test_header"}>
       <button className={"easy_lexical_test_button register"} type={"button"} onClick={onSubmit}>
         작성
+      </button>
+
+      <button
+        className={"easy_lexical_test_button register"}
+        type={"button"}
+        onClick={allClear}
+        style={{ backgroundColor: "red" }}
+      >
+        작성 전체 삭제
+      </button>
+
+      <button
+        className={"easy_lexical_test_button register"}
+        type={"button"}
+        onClick={popClear}
+        style={{ backgroundColor: "brown" }}
+      >
+        마지막 작성 삭제
       </button>
 
       <div
