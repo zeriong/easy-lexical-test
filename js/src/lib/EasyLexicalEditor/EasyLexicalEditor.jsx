@@ -139,8 +139,8 @@ export default function EasyLexicalEditor({
         <ExcelPastePlugin />
 
         {/* 파일을 필요로 하는 플러그인 */}
-        <ImageDnDPlugin saveServerFetcher={handleSaveServerFetcher} />
-        <PasteImagePlugin saveServerFetcher={handleSaveServerFetcher} />
+        <ImageDnDPlugin saveServerFetcher={saveServerFetcher && handleSaveServerFetcher} />
+        <PasteImagePlugin saveServerFetcher={saveServerFetcher && handleSaveServerFetcher} />
       </>
 
       <div className="editor-container">

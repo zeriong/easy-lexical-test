@@ -1,5 +1,5 @@
 import React from "react";
-import { DecoratorNode } from "lexical";
+import { $createParagraphNode, DecoratorNode } from "lexical";
 import BridgeResizable from "../components/resizableImage/BridgeResizable.jsx";
 
 export class ResizableImageNode extends DecoratorNode {
@@ -65,7 +65,7 @@ export class ResizableImageNode extends DecoratorNode {
   }
 
   createDOM() {
-    const el = document.createElement("p");
+    const el = document.createElement("span");
     const id = `easy_lexical_image_wrapper_${Date.now() + Math.random()}`;
     el.style.display = "inline-block";
     el.style.position = "relative";
@@ -139,6 +139,7 @@ export class ResizableImageNode extends DecoratorNode {
               const hAttr = node.getAttribute("data-height") || node.getAttribute("height");
               const width = wAttr ? parseInt(wAttr, 10) : undefined;
               const height = hAttr ? parseInt(hAttr, 10) : undefined;
+
               return { node: new ResizableImageNode({ src, alt, width, height }) };
             },
           };
@@ -151,5 +152,8 @@ export class ResizableImageNode extends DecoratorNode {
 
 export function $createResizableImageNode(payload) {
   console.log("이미지 페이로드", payload);
-  return new ResizableImageNode(payload);
+  const node = $createParagraphNode();
+  node.append(new ResizableImageNode(payload));
+
+  return node;
 }
