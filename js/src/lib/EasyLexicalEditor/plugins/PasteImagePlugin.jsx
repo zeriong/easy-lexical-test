@@ -11,7 +11,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 
 /**
  * @param {Object} props
- * @param {() => Promise<string>} props.saveServerFetcher
+ * @param {(file: any) => Promise<string>} props.saveServerFetcher
  * */
 export default function PasteImagePlugin({ saveServerFetcher }) {
   const [editor] = useLexicalComposerContext();
@@ -24,10 +24,22 @@ export default function PasteImagePlugin({ saveServerFetcher }) {
         const file = clipboardData?.files[0];
 
         if (clipboardData && file && file.type.includes("image")) {
-          editor.update(() => {
+          editor.update(async () => {
+            let src = null;
+
+            if (saveServerFetcher) {
+              src = await saveServerFetcher(file);
+            } else {
+              src = URL.createObjectURL(file);
+            }
+
+            if (!src) {
+              return;
+            }
+
             const node = $createResizableImageNode({
               ...file,
-              src: URL.createObjectURL(file),
+              src,
             });
 
             const selection = $getSelection();

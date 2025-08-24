@@ -11,7 +11,7 @@ import { $createResizableImageNode } from "../nodes/ResizableImageNode.jsx";
 
 /**
  * @param {Object} props
- * @param {() => Promise<string>} props.saveServerFetcher
+ * @param {(file: any) => Promise<string>} props.saveServerFetcher
  * */
 export default function ImageDnDPlugin({ saveServerFetcher }) {
   const [editor] = useLexicalComposerContext();
@@ -19,14 +19,26 @@ export default function ImageDnDPlugin({ saveServerFetcher }) {
   useEffect(() => {
     const removeDnDFile = editor.registerCommand(
       DROP_COMMAND,
-      (e) => {
+      async (e) => {
         const dataTransfer = e.dataTransfer;
         const file = dataTransfer?.files[0];
 
         if (dataTransfer && file) {
+          let src = null;
+
+          if (saveServerFetcher) {
+            src = await saveServerFetcher(file);
+          } else {
+            src = URL.createObjectURL(file);
+          }
+
+          if (!src) {
+            return;
+          }
+
           const node = $createResizableImageNode({
             ...file,
-            src: URL.createObjectURL(file),
+            src,
           });
 
           const selection = $getSelection();

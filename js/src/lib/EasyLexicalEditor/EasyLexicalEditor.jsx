@@ -55,7 +55,7 @@ const exportMap = new Map([
  * @param {React.CSSProperties} props.editorInnerStyle
  * @param {`${number}px` | `${number}%` | `${number}vw` | "auto"} props.editorInnerWidth
  * @param {`${number}px` | `${number}%` | `${number}vh` | "auto"} props.editorInnerHeight
- * @param {() => Promise<string>} props.saveServerFetcher
+ * @param {(file: any) => Promise<string>} props.saveServerFetcher
  * @param {number} props.toastShowingDuration
  * @param {string | ReactNode} props.uploadFailMessage
  * @param {boolean} props.isToastAutoHidden
@@ -111,10 +111,10 @@ export default function EasyLexicalEditor({
   }
 
   // ? save server fetch 핸들 함수
-  async function handleSaveServerFetcher() {
+  async function handleSaveServerFetcher(file) {
     try {
       setIsLoading(true);
-      const saveUrl = await saveServerFetcher();
+      const saveUrl = await saveServerFetcher(file);
       if (saveUrl) {
         return saveUrl;
       }
@@ -136,11 +136,11 @@ export default function EasyLexicalEditor({
         <HistoryPlugin />
         <AutoFocusPlugin />
         <ResizableTablePlugin />
+        <ExcelPastePlugin />
 
         {/* 파일을 필요로 하는 플러그인 */}
         <ImageDnDPlugin saveServerFetcher={handleSaveServerFetcher} />
         <PasteImagePlugin saveServerFetcher={handleSaveServerFetcher} />
-        <ExcelPastePlugin saveServerFetcher={handleSaveServerFetcher} />
       </>
 
       <div className="editor-container">

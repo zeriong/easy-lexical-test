@@ -265,11 +265,7 @@ function buildParagraphsFromCellDOM(cellEl, byClass, byTag, cellStyleForFallback
   return paras;
 }
 
-/**
- * @param {Object} props
- * @param {() => Promise<string>} props.saveServerFetcher
- * */
-export default function ExcelPastePlugin({ saveServerFetcher }) {
+export default function ExcelPastePlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
