@@ -4,7 +4,7 @@ import { devtools } from "zustand/middleware";
 /**
  * @typedef {Object} EditorStore
  * @property {boolean} isLoading
- * @property {() => void} setIsLoading
+ * @property {(isLoading: boolean) => void} setIsLoading
  */
 
 /**

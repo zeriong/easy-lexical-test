@@ -457,17 +457,18 @@ pre::-webkit-scrollbar-thumb {
 
 /* 토스트 */
 .editor-toast-container {
+    cursor: default;
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
-    max-width: 720px;
+    width: fit-content;
+    /*max-width: 720px;*/
     display: none; /* hidden */
     opacity: 0;
     align-items: center;
-    padding: 6px 12px 6px 6px;
-    border-radius: 32px;
+    border-radius: 14px;
     border: 1px solid #d1d5db;
     background-color: #ffffff;
     color: #1f2937;
@@ -477,11 +478,13 @@ pre::-webkit-scrollbar-thumb {
     line-height: 20px;
     transition: all 300ms ease-in-out;
 
+
     & .editor-toast-content-wrapper {
         display: flex;
-        align-items: center;
+        padding: 10px 12px 10px 8px;
 
         & .editor-toast-content{
+            padding-top: 2px;
             width: 100%;
             display: flex;
             align-items: center;
@@ -493,10 +496,14 @@ pre::-webkit-scrollbar-thumb {
 
         & i {
             min-width: 24px;
+            width: 24px;
             min-height: 24px;
+            height: 24px;
             background: no-repeat center center;
             background-size: 100%;
             margin-right: 6px;
+            /*align-items: flex-start;*/
+            align-items: center;
 
             &.success {
                 background-image: url(../assets/icons/toast/success-icon.svg)

@@ -30,7 +30,7 @@ export default function TestHeader({ onSubmit }) {
       <div
         className={"easy_lexical_test_button"}
         onClick={() => {
-          addToast.warn("Warning!");
+          addToast.warn(`업로드에 실패하였습니다, 관리자에게 문의해주세요.`);
         }}
       >
         경고 토스트

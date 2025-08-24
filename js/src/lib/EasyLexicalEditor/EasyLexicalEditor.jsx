@@ -38,6 +38,7 @@ import { StyledTableCellNode } from "./nodes/table/StyledTableCellNode.js";
 import LoadingCover from "./components/LoadingCover.jsx";
 import { Toasts } from "./components/Toasts.jsx";
 import { useToastStore } from "./store/toastStore.jsx";
+import { useEditorStore } from "./store/editorStore.js";
 
 const exportMap = new Map([
   [ParagraphNode, whitelistStylesExportDOM],
@@ -55,6 +56,9 @@ const exportMap = new Map([
  * @param {`${number}px` | `${number}%` | `${number}vw` | "auto"} props.editorInnerWidth
  * @param {`${number}px` | `${number}%` | `${number}vh` | "auto"} props.editorInnerHeight
  * @param {() => Promise<string>} props.saveServerFetcher
+ * @param {number} props.toastShowingDuration
+ * @param {string | ReactNode} props.uploadFailMessage
+ * @param {boolean} props.isToastAutoHidden
  * */
 export default function EasyLexicalEditor({
   showTerminal,
@@ -64,6 +68,9 @@ export default function EasyLexicalEditor({
   editorInnerWidth,
   editorInnerHeight = "500px",
   saveServerFetcher,
+  toastShowingDuration,
+  uploadFailMessage = `업로드에 실패하였습니다, 관리자에게 문의해주세요.`,
+  isToastAutoHidden,
 }) {
   const editorConfig = {
     html: {
@@ -90,6 +97,7 @@ export default function EasyLexicalEditor({
   };
 
   const { addToast } = useToastStore();
+  const { setIsLoading } = useEditorStore();
 
   // ? 온체인지 핸들 함수
   function handleChange(editorState, editor) {
@@ -112,6 +120,7 @@ export default function EasyLexicalEditor({
       }
     } catch (e) {
       console.error("save server error: ", e);
+      addToast.warn(uploadFailMessage);
       return null;
     } finally {
       setIsLoading(false);
@@ -160,8 +169,9 @@ export default function EasyLexicalEditor({
 
           {/* 로딩커버 */}
           <LoadingCover />
+
           {/* 토스트 */}
-          <Toasts />
+          <Toasts showingDuration={toastShowingDuration} isAutoHidden={isToastAutoHidden} />
         </div>
 
         {/* Test terminal Plugin */}
